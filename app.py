@@ -32,7 +32,10 @@ def register():
         # Extract registration data from the request
         name = data.get('name')
         email = data.get('email')
+        phone_number = data.get('phone_number')
         password = data.get('password')
+        interests = data.get('interests')
+        interests = ','.join(interests)
 
         # Hash the password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -51,19 +54,20 @@ def register():
             return jsonify(response_data), 400
 
         # Insert the user into the database
-        db_cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)", (name, email, hashed_password))
+        db_cursor.execute("INSERT INTO users (name, email, phone_number, password, interests) VALUES (%s, %s, %s, %s, %s)", (name, email, phone_number, hashed_password, interests))
         db_connection.commit()
 
-        # Generate JWT token
-        user_id = db_cursor.lastrowid
-        token = jwt.encode({'user_id': user_id}, app.config['SECRET_KEY'], algorithm='HS256')
-
-        # Create the response data with the token
+        # Create the response data
         response_data = {
             "status": 200,
-            "message": "OK",
+            "message": "Verify mail",
             "data": {
-                "token": token
+                "account": {
+                    "name": name,
+                    "email": email,
+                    "phone": phone_number
+                },
+                "preference": interests.split(',')
             }
         }
 
@@ -79,6 +83,7 @@ def register():
         }
         return jsonify(response_data), 500
 
+
 @app.route('/login', methods=['POST'])
 def login():
     try:
@@ -93,7 +98,7 @@ def login():
         db_cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         user = db_cursor.fetchone()
 
-        if user is None or not bcrypt.checkpw_hash(password.encode('utf-8'), user['password']):
+        if user is None or not bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             # Unauthorized access (invalid email or password)
             response_data = {
                 "status": 401,
@@ -125,6 +130,10 @@ def login():
             "data": None
         }
         return jsonify(response_data), 500
+    
+@app.route('/')
+def index():
+    return "Hello Wisnu"
 
 @app.errorhandler(400)
 def handle_client_error(e):
@@ -137,4 +146,6 @@ def handle_client_error(e):
     return jsonify(response_data), 400
 
 if __name__ == '__main__':
-    app.run()
+    # Use Gunicorn as the WSGI server
+    # Specify the number of workers and bind to port 80
+    app.run(host='0.0.0.0', port=80)
