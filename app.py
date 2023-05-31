@@ -210,12 +210,21 @@ def itinerary():
         })
         response_data = response.json()
         itinerary = response_data['choices'][0]['text']
-        points_of_interest_prompt = 'Extract the points of interest out of this text, with no additional words, separated by commas: ' + itinerary
+        
+        points_of_interest_prompt = 'Extract the points of interest out of this text, with no additional words, separated only by commas, dont use spaces nor newlines, but use space between words in names of the places (example= "Eiffel Tower,Mount Everest,Great Bridge of China): ' + itinerary
+        response = requests.post('https://api.openai.com/v1/completions', headers=HEADERS, json={
+            'model': 'text-davinci-003',
+            'prompt': points_of_interest_prompt,
+            'temperature': 0,
+            'max_tokens': 550
+        })
+        response_data = response.json()
+        points_of_interests = response_data['choices'][0]['text']
 
         return jsonify({
             'message': 'success',
-            'pointsOfInterestPrompt': points_of_interest_prompt,
-            'itinerary': itinerary
+            'itinerary': itinerary,
+            'points_of_interests': points_of_interests
         })
 
     except Exception as e:
