@@ -23,6 +23,9 @@ db_connection = mysql.connector.connect(
 # Create a cursor to interact with the database
 db_cursor = db_connection.cursor(dictionary=True)
 
+# Store active tokens (for authenticated users)
+active_tokens = set()
+
 @app.route('/register', methods=['POST'])
 def register():
     try:
@@ -57,6 +60,13 @@ def register():
         db_cursor.execute("INSERT INTO users (name, email, phone_number, password, interests) VALUES (%s, %s, %s, %s, %s)", (name, email, phone_number, hashed_password, interests))
         db_connection.commit()
 
+        # Generate JWT token
+        token = jwt.encode({'email': email}, app.config['SECRET_KEY'], algorithm='HS256')
+
+        # Add the token to the active_tokens set
+        active_tokens.add(token)
+        print(f"User {email} registered")
+
         # Create the response data
         response_data = {
             "status": 200,
@@ -67,7 +77,8 @@ def register():
                     "email": email,
                     "phone": phone_number
                 },
-                "preference": interests.split(',')
+                "preference": interests.split(','),
+                "token": token
             }
         }
 
@@ -108,7 +119,11 @@ def login():
             return jsonify(response_data), 401
 
         # Generate JWT token
-        token = jwt.encode({'user_id': user['id']}, app.config['SECRET_KEY'], algorithm='HS256')
+        token = jwt.encode({'email': email}, app.config['SECRET_KEY'], algorithm='HS256')
+
+        # Add the token to the active_tokens set
+        active_tokens.add(token)
+        print(f"User {email} logged in")
 
         # Create the response data with the token
         response_data = {
@@ -130,10 +145,38 @@ def login():
             "data": None
         }
         return jsonify(response_data), 500
-    
-@app.route('/')
-def index():
-    return "Hello Wisnu"
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    try:
+        # Get the request data
+        data = request.json
+
+        # Extract the token from the request
+        token = data.get('token')
+
+        # Remove the token from the active_tokens set
+        active_tokens.remove(token)
+        print(f"User logged out")
+
+        # Create the response data
+        response_data = {
+            "status": 200,
+            "message": "Logged out successfully",
+            "data": None
+        }
+
+        # Return the response as JSON
+        return jsonify(response_data), 200
+
+    except KeyError:
+        # Token not found in the active_tokens set
+        response_data = {
+            "status": 401,
+            "message": "Invalid token",
+            "data": None
+        }
+        return jsonify(response_data), 401
 
 @app.errorhandler(400)
 def handle_client_error(e):
@@ -146,6 +189,4 @@ def handle_client_error(e):
     return jsonify(response_data), 400
 
 if __name__ == '__main__':
-    # Use Gunicorn as the WSGI server
-    # Specify the number of workers and bind to port 80
     app.run(host='0.0.0.0', port=80)
