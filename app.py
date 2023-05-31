@@ -26,7 +26,7 @@ db_cursor = db_connection.cursor(dictionary=True)
 # Store active tokens (for authenticated users)
 active_tokens = set()
 
-@app.route('/register', methods=['POST'])
+@app.route('/auth/register', methods=['POST'])
 def register():
     try:
         # Get the request data
@@ -95,7 +95,7 @@ def register():
         return jsonify(response_data), 500
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/auth/login', methods=['POST'])
 def login():
     try:
         # Get the request data
@@ -146,7 +146,7 @@ def login():
         }
         return jsonify(response_data), 500
 
-@app.route('/logout', methods=['POST'])
+@app.route('/auth/logout', methods=['POST'])
 def logout():
     try:
         # Get the request data
