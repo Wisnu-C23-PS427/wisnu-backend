@@ -4,6 +4,7 @@ import mysql.connector
 import os
 import bcrypt
 from dotenv import load_dotenv
+import requests
 
 load_dotenv('.env')
 
@@ -177,7 +178,55 @@ def logout():
             "data": None
         }
         return jsonify(response_data), 401
+    
+@app.route('/itinerary', methods=['POST'])
+def itinerary():
+    GPT_KEY = os.getenv('GPT_KEY')
+    HEADERS = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {GPT_KEY}'
+    }
 
+    data = request.get_json()
+    days = data.get('days')
+    city = data.get('city')
+    start_date = data.get('startDate')
+
+    parts = city.split(' ')
+    if len(parts) > 5:
+        return jsonify({'message': 'please reduce size of request'}), 400
+
+    if days > 10:
+        days = 10
+
+    base_prompt = f"what is an ideal and complete itinerary for {days} days and starting out on {start_date} in {city}?"
+
+    try:
+        response = requests.post('https://api.openai.com/v1/completions', headers=HEADERS, json={
+            'model': 'text-davinci-003',
+            'prompt': base_prompt,
+            'temperature': 0,
+            'max_tokens': 550
+        })
+        response_data = response.json()
+        itinerary = response_data['choices'][0]['text']
+        points_of_interest_prompt = 'Extract the points of interest out of this text, with no additional words, separated by commas: ' + itinerary
+
+        return jsonify({
+            'message': 'success',
+            'pointsOfInterestPrompt': points_of_interest_prompt,
+            'itinerary': itinerary
+        })
+
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
+    
 @app.errorhandler(400)
 def handle_client_error(e):
     # Client error
