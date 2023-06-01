@@ -5,6 +5,7 @@ import os
 import bcrypt
 from dotenv import load_dotenv
 import requests
+from ml import generate_itinerary
 
 load_dotenv('.env')
 
@@ -235,7 +236,23 @@ def itinerary():
             "data": None
         }
         return jsonify(response_data), 500
-    
+
+
+@app.route('/city/<string:city_name>/itinerary', methods=['GET'])
+def get_itinerary(city_name):
+    # Get the value of the 'days' query parameter
+    num_days = int(request.args.get('days', 1))
+
+    # Generate the itinerary data based on the city name and number of days
+    itinerary_data = generate_itinerary(city_name, num_days)
+
+    # Return the response as JSON
+    return jsonify({
+        "status": 200,
+        "message": "OK",
+        "data": itinerary_data
+    })
+
 @app.errorhandler(400)
 def handle_client_error(e):
     # Client error
