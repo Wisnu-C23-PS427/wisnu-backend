@@ -418,3 +418,177 @@ def get_poi(poi_id):
 
 if __name__ == '__main__':
     app.run()
+
+# -------------------------------------------------------------------
+
+# Function to read cities data from CSV
+def read_cities_from_csv():
+    cities = []
+    with open('cities.csv', 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            cities.append(row)
+    return cities
+
+# Get cities endpoint
+@app.route('/cities', methods=['GET'])
+def get_cities():
+    # Read cities data from CSV
+    cities = read_cities_from_csv()
+
+    # Check if preview parameter is set to true
+    preview = request.args.get('preview')
+    if preview and preview.lower() == 'true':
+        # Return limited size (preview) response
+        size = 5  # Set the preview size here
+        page = 1   # Set the preview page here
+        data = cities[:size]
+        response = {
+            "status": 200,
+            "message": "OK",
+            "preview": True,
+            "size": size,
+            "page": page,
+            "data": data
+        }
+    else:
+        # Return full size (paginated) response
+        size = int(request.args.get('size', len(cities)))
+        page = int(request.args.get('page', 1))
+        start_index = (page - 1) * size
+        end_index = start_index + size
+        data = cities[start_index:end_index]
+        response = {
+            "status": 200,
+            "message": "OK",
+            "preview": False,
+            "size": size,
+            "page": page,
+            "data": data
+        }
+    
+    return jsonify(response)
+
+if __name__ == '__main__':
+    app.run()
+
+# -------------------------------------------------------------------
+
+# Function to read cities data from CSV
+def read_cities_from_csv():
+    cities = []
+    with open('cities.csv', 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            cities.append(row)
+    return cities
+
+# Function to read POIs data from CSV
+def read_pois_from_csv():
+    pois = []
+    with open('pois.csv', 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            pois.append(row)
+    return pois
+
+# Get city detail endpoint
+@app.route('/city/<int:city_id>', methods=['GET'])
+def get_city_detail(city_id):
+    # Read cities and POIs data from CSV
+    cities = read_cities_from_csv()
+    pois = read_pois_from_csv()
+
+    # Find the city with the given city_id
+    city = next((c for c in cities if int(c['id']) == city_id), None)
+    if city:
+        # Filter POIs for the specific city_id
+        city_pois = [poi for poi in pois if int(poi['city_id']) == city_id]
+
+        # Prepare the response
+        response = {
+            "status": 200,
+            "message": "OK",
+            "data": {
+                "id": int(city['id']),
+                "name": city['name'],
+                "location": city['location'],
+                "description": city['description'],
+                "image": city['image'],
+                "poi": city_pois
+            }
+        }
+    else:
+        # City not found
+        response = {
+            "status": 404,
+            "message": "City not found"
+        }
+    
+    return jsonify(response)
+
+if __name__ == '__main__':
+    app.run()
+
+    # -------------------------------------------------------------------
+
+# Function to read city itineraries from CSV
+def read_city_itineraries_from_csv(city_id, num_days):
+    itineraries = []
+    with open('city_itineraries.csv', 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if int(row['city_id']) == city_id and int(row['day']) <= num_days:
+                itineraries.append(row)
+    return itineraries
+
+# Get city itineraries endpoint
+@app.route('/city/<int:city_id>/itinerary', methods=['GET'])
+def get_city_itineraries(city_id):
+    # Get query parameter 'days' from the request
+    num_days = int(request.args.get('days', default=1))
+
+    # Read city itineraries from CSV
+    city_itineraries = read_city_itineraries_from_csv(city_id, num_days)
+
+    # Prepare the response
+    response = {
+        "status": 200,
+        "message": "OK",
+        "data": []
+    }
+
+    # Group itineraries by day
+    grouped_itineraries = {}
+    for itinerary in city_itineraries:
+        day = int(itinerary['day'])
+        if day not in grouped_itineraries:
+            grouped_itineraries[day] = []
+        grouped_itineraries[day].append(itinerary)
+
+    # Create the response data structure
+    for day, itineraries in grouped_itineraries.items():
+        day_data = {
+            "day": day,
+            "poi": []
+        }
+        for itinerary in itineraries:
+            poi = {
+                "id": int(itinerary['poi_id']),
+                "name": itinerary['poi_name'],
+                "location": itinerary['poi_location'],
+                "image": itinerary['poi_image'],
+                "tickets": {
+                    "is_ticketing_enabled": bool(itinerary['is_ticketing_enabled']),
+                    "adult_price": int(itinerary['adult_price']),
+                    "child_price": int(itinerary['child_price'])
+                }
+            }
+            day_data['poi'].append(poi)
+        response['data'].append(day_data)
+
+    return jsonify(response)
+
+if __name__ == '__main__':
+    app.run()
+
