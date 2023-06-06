@@ -265,3 +265,58 @@ def handle_client_error(e):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80)
+
+# -------------------------------------------------------------------
+
+# Define a sample list of POI data
+poi_data = [
+    {
+        "id": 8,
+        "name": "Situgunung Susppension Bridge",
+        "location": "Sukabumi,Jawa Barat",
+        "image": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/17/7e/5a/02/photo0jpg.jpg?w=500&h=-1&s=1"
+    },
+    {
+        "id": 7,
+        "name": "Curug Cikaso,Waterfalls",
+        "location": "Sukabumi Regency,West Java",
+        "image": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/13/00/69/45/curug-cikaso.jpg?w=500&h=400&s=1"
+    },
+    {
+        "id": 6,
+        "name": "Curug Sawer SitugunungK,Hiking Trails",
+        "location": "Kabupaten Sukabumi,Jawa Barat",
+        "image": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0d/fc/1f/c2/curug-sawer-situgunung.jpg?w=500&h=-1&s=1"
+    },
+    {
+        "id": 5,
+        "name": "Curug Awang,Waterfalls",
+        "location": "Sukabumi Regency,West Java",
+        "image": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/06/20/01/e0/curug-awang.jpg?w=500&h=400&s=1"
+    }
+    # {
+    #     "id": 5,
+    #     "name": "POI Name",
+    #     "location": "POI Location",
+    #     "image": "www.path/to/poi_image.jpg"
+    # }
+]
+
+@app.route('/poi', methods=['GET'])
+def get_poi():
+    category = request.args.get('category')
+
+    # Filter the POI data based on the category
+    filtered_data = [poi for poi in poi_data if poi['category'] == category]
+
+    response = {
+        "status": 200,
+        "message": "OK",
+        "size": len(filtered_data),
+        "page": 1,
+        "data": filtered_data
+    }
+    return jsonify(response)
+
+if __name__ == '__main__':
+    app.run()
