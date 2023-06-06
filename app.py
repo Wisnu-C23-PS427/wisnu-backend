@@ -269,38 +269,31 @@ if __name__ == '__main__':
 # -------------------------------------------------------------------
 
 # Define a sample list of POI data
-poi_data = [
-    {
-        "id": 8,
-        "name": "Situgunung Susppension Bridge",
-        "location": "Sukabumi,Jawa Barat",
-        "image": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/17/7e/5a/02/photo0jpg.jpg?w=500&h=-1&s=1"
-    },
-    {
-        "id": 7,
-        "name": "Curug Cikaso,Waterfalls",
-        "location": "Sukabumi Regency,West Java",
-        "image": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/13/00/69/45/curug-cikaso.jpg?w=500&h=400&s=1"
-    },
-    {
-        "id": 6,
-        "name": "Curug Sawer SitugunungK,Hiking Trails",
-        "location": "Kabupaten Sukabumi,Jawa Barat",
-        "image": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0d/fc/1f/c2/curug-sawer-situgunung.jpg?w=500&h=-1&s=1"
-    },
-    {
-        "id": 5,
-        "name": "Curug Awang,Waterfalls",
-        "location": "Sukabumi Regency,West Java",
-        "image": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/06/20/01/e0/curug-awang.jpg?w=500&h=400&s=1"
-    }
-    # {
-    #     "id": 5,
-    #     "name": "POI Name",
-    #     "location": "POI Location",
-    #     "image": "www.path/to/poi_image.jpg"
-    # }
-]
+import csv
+
+poi_data = []
+
+# Open the CSV file
+with open('data.csv', 'r') as file:
+    # Create a CSV reader object
+    csv_reader = csv.DictReader(file)
+    
+    # Read each row of the CSV file
+    for row in csv_reader:
+        # Create a dictionary for each row
+        poi = {
+            "id": int(row["attraction_id"]),
+            "name": row["nama"],
+            "location": row["kota"],
+            "image": row["img"]
+        }
+        
+        # Add the dictionary to the poi_data list
+        poi_data.append(poi)
+
+# Print the retrieved data
+for poi in poi_data:
+    print(poi)
 
 @app.route('/poi', methods=['GET'])
 def get_poi():
