@@ -313,3 +313,108 @@ def get_poi():
 
 if __name__ == '__main__':
     app.run()
+
+# -------------------------------------------------------------------
+
+# Function to read POI data from the CSV file
+def read_poi_data():
+    poi_data = []
+    with open('poi_data.csv', 'r') as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            poi_data.append(row)
+    return poi_data
+
+# Function to get POI data by ID
+def get_poi_by_id(poi_id):
+    poi_data = read_poi_data()
+    for poi in poi_data:
+        if int(poi['id']) == poi_id:
+            return poi
+    return None
+
+# API endpoint to retrieve POI data by ID
+@app.route('/poi/<int:poi_id>', methods=['GET'])
+def get_poi(poi_id):
+    poi = get_poi_by_id(poi_id)
+    if poi is not None:
+        # Construct the response with POI data
+        response = {
+            "status": 200,
+            "message": "OK",
+            "data": {
+                "id": int(poi["id"]),
+                "name": poi["name"],
+                "location": poi["location"],
+                "image": poi["image"],
+                "background_story": poi["deskripsi"],
+                "position": {
+                    "long": float(poi["longtitude"]),
+                    "lat": float(poi["latitude"])
+                },
+                "guides": [
+                    {
+                        "id": int(poi["guide1_id"]),
+                        "name": poi["guide1_name"],
+                        "price": int(poi["guide1_price"]),
+                        "image": poi["guide1_image"],
+                        "time_duration_in_min": int(poi["guide1_duration"])
+                    },
+                    {
+                        "id": int(poi["guide2_id"]),
+                        "name": poi["guide2_name"],
+                        "price": int(poi["guide2_price"]),
+                        "image": poi["guide2_image"],
+                        "time_duration_in_min": int(poi["guide2_duration"])
+                    },
+                    {
+                        "id": int(poi["guide3_id"]),
+                        "name": poi["guide3_name"],
+                        "price": int(poi["guide3_price"]),
+                        "image": poi["guide3_image"],
+                        "time_duration_in_min": int(poi["guide3_duration"])
+                    }
+                ],
+                "tickets": {
+                    "is_ticketing_enabled": bool(poi["ticketing_enabled"]),
+                    "adult_price": int(poi["adult_price"]),
+                    "child_price": int(poi["child_price"])
+                },
+                "galleries": [
+                    {
+                        "id": int(poi["gallery1_id"]),
+                        "name": poi["gallery1_name"],
+                        "is_from_wisnu_team": bool(poi["gallery1_wisnu_team"]),
+                        "is_vr_capable": bool(poi["gallery1_vr_capable"]),
+                        "image": poi["gallery1_image"],
+                        "created_at": poi["gallery1_created_at"]
+                    },
+                    {
+                        "id": int(poi["gallery2_id"]),
+                        "name": poi["gallery2_name"],
+                        "is_from_wisnu_team": bool(poi["gallery2_wisnu_team"]),
+                        "is_vr_capable": bool(poi["gallery2_vr_capable"]),
+                        "image": poi["gallery2_image"],
+                        "created_at": poi["gallery2_created_at"]
+                    },
+                    {
+                        "id": int(poi["gallery3_id"]),
+                        "name": poi["gallery3_name"],
+                        "is_from_wisnu_team": bool(poi["gallery3_wisnu_team"]),
+                        "is_vr_capable": bool(poi["gallery3_vr_capable"]),
+                        "image": poi["gallery3_image"],
+                        "created_at": poi["gallery3_created_at"]
+                    }
+                ]
+            }
+        }
+        return jsonify(response)
+    else:
+        response = {
+            "status": 404,
+            "message": "POI not found"
+        }
+        return jsonify(response), 404
+
+if __name__ == '__main__':
+    app.run()
