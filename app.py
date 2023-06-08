@@ -257,6 +257,32 @@ def account():
             "data": None
         }
         return jsonify(response_data), 500
+
+@app.route('/pois/categories', methods=['GET'])
+def get_categories():
+    try:
+        # Query the database to get the categories
+        db_cursor.execute("SELECT id, name, image FROM category")
+        categories = db_cursor.fetchall()
+
+        # Create the response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": categories
+        }
+
+        # Return the response as JSON
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
     
 @app.route('/itinerary', methods=['POST'])
 def itinerary():
@@ -340,9 +366,6 @@ def handle_client_error(e):
         "data": None
     }
     return jsonify(response_data), 400
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
 
 # -------------------------------------------------------------------
 
