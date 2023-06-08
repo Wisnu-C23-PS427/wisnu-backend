@@ -28,6 +28,9 @@
 
 __pycache__/
 
+# Python virtualenv
+venv/
+
 # Ignored by the build system
 
 /setup.cfg
