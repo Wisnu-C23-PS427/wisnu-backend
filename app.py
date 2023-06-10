@@ -284,6 +284,54 @@ def get_categories():
         }
         return jsonify(response_data), 500
 
+@app.route('/discover', methods=['GET'])
+def discover():
+    try:
+        # Query the database to get the top-rated cities and POIs
+        db_cursor.execute("""
+            SELECT MIN(p.attraction_id) AS id, p.kota AS name, p.provinsi AS location, MIN(p.img) AS image, AVG(p.total_rating) AS total_rating
+            FROM pois AS p
+            WHERE p.total_rating <> 'None'
+            GROUP BY p.kota, p.provinsi
+            ORDER BY total_rating DESC
+            LIMIT 3
+        """)
+        cities = db_cursor.fetchall()
+
+        # Query the database to get the top-rated POIs
+        db_cursor.execute("""
+            SELECT p.attraction_id AS id, p.nama AS name, p.kota AS location, p.img AS image, p.total_rating AS total_rating
+            FROM pois AS p
+            WHERE p.total_rating <> 'None'
+            ORDER BY p.total_rating DESC
+            LIMIT 3
+        """)
+        poi = db_cursor.fetchall()
+
+        # Create the response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": {
+                "cities": cities,
+                "poi": poi
+            }
+        }
+
+        # Return the response as JSON
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
+
+
+
 @app.route('/poi', methods=['GET'])
 def get_poi():
     try:
