@@ -6,7 +6,7 @@ import bcrypt
 from dotenv import load_dotenv
 import requests
 from functools import wraps
-from ml import generate_itinerary
+from itinerary import generate_itinerary
 
 load_dotenv('.env')
 
@@ -342,19 +342,60 @@ def itinerary():
         return jsonify(response_data), 500
 
 
-@app.route('/city/<string:city_name>/itinerary', methods=['GET'])
-def get_itinerary(city_name):
+@app.route('/city/<int:city_id>/itinerary', methods=['GET'])
+def get_itinerary(city_id):
+    # Query the database to get the city name based on the city_id
+    db_cursor.execute("SELECT kota FROM pois WHERE attraction_id = %s", (city_id,))
+    result = db_cursor.fetchone()
+    print("=============================================")
+    print(result)
+
+    if not result:
+        # City not found
+        response_data = {
+            "status": 404,
+            "message": "City not found",
+            "data": None
+        }
+        return jsonify(response_data), 404
+
+    city_name = result['kota']
+
     # Get the value of the 'days' query parameter
     num_days = int(request.args.get('days', 1))
 
     # Generate the itinerary data based on the city name and number of days
     itinerary_data = generate_itinerary(city_name, num_days)
 
+    # Divide the itinerary data into an array of days
+    itinerary_per_day = []
+    for day in range(1, num_days + 1):
+        poi_per_day = []
+        for poi in itinerary_data:
+            if poi['hari'] == day:
+                poi_data = {
+                    "id": poi['attraction_id'],
+                    "name": poi['nama'],
+                    "location": poi['kota'],
+                    "image": poi['img'],
+                    "tickets": {
+                        "is_ticketing_enabled": True,
+                        "adult_price": poi['adult_price'],
+                        "child_price": poi['child_price']
+                    }
+                }
+                poi_per_day.append(poi_data)
+        day_data = {
+            "day": day,
+            "poi": poi_per_day
+        }
+        itinerary_per_day.append(day_data)
+
     # Return the response as JSON
     return jsonify({
         "status": 200,
         "message": "OK",
-        "data": itinerary_data
+        "data": itinerary_per_day
     })
 
 @app.errorhandler(400)

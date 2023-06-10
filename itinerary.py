@@ -54,7 +54,7 @@ def generate_itinerary(city_name, num_days):
         return distance
 
     # Merekomendasikan item berdasarkan kota dan durasi liburan yang diberikan
-    def recommend_items(kota, durasi, item_embeddings, items=data[['attraction_id', 'nama', 'kota', 'provinsi','longitude','latitude','img','total_rating']], k=5):
+    def recommend_items(kota, durasi, item_embeddings, items=data[['attraction_id', 'nama', 'kota', 'id_kota', 'provinsi','longitude','latitude','img','total_rating', 'category', 'child_price', 'adult_price']], k=5):
         indeks_item = get_item_index_by_kota(kota, data)
         if indeks_item is None:
             return pd.DataFrame()  # Mengembalikan dataframe kosong jika kota tidak ditemukan
@@ -92,11 +92,12 @@ def generate_itinerary(city_name, num_days):
         return item_terrekomendasikan
 
     # Replace kota_input and durasi_input with the city_name and num_days arguments respectively
-    item_terrekomendasikan = recommend_items(city_name, num_days, item_embeddings, items=data[['attraction_id', 'nama', 'kota', 'provinsi','longitude','latitude','img','total_rating', 'deskripsi']], k=10)
+    item_terrekomendasikan = recommend_items(city_name, num_days, item_embeddings, items=data[['attraction_id', 'nama', 'kota', 'id_kota', 'provinsi','longitude','latitude','img','total_rating', 'category', 'child_price', 'adult_price']], k=20)
 
     if not item_terrekomendasikan.empty:
         output = item_terrekomendasikan.to_dict(orient='records')
         json_output = json.dumps(output)
+        print(json_output)
         return json.loads(json_output)
     else:
         output = {'message': 'Tidak ada item yang ditemukan untuk kota yang diberikan.'}
