@@ -283,7 +283,38 @@ def get_categories():
             "data": None
         }
         return jsonify(response_data), 500
-    
+
+@app.route('/poi', methods=['GET'])
+def get_poi():
+    try:
+        # Get the category from the query parameters
+        category = request.args.get('category')
+
+        # Query the database to get the POIs based on the category
+        db_cursor.execute("SELECT attraction_id, nama AS name, kota AS location, img AS image FROM pois WHERE category = %s", (category,))
+        pois = db_cursor.fetchall()
+
+        # Create the response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "size": len(pois),
+            "page": 1,
+            "data": pois
+        }
+
+        # Return the response as JSON
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
+
 @app.route('/itinerary', methods=['POST'])
 def itinerary():
     GPT_KEY = os.getenv('GPT_KEY')
