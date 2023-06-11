@@ -255,6 +255,31 @@ def account():
             "data": None
         }
         return jsonify(response_data), 500
+    
+@app.route('/events/<int:id>', methods=['GET'])
+def get_event(id):
+    db_cursor.execute("SELECT * FROM events WHERE attraction_id = %s", (id,))
+    event = db_cursor.fetchone()
+
+    if event is None:
+        return jsonify({'message': 'Event not found'}), 404
+
+    event_data = {
+        'attraction_id': event['attraction_id'],
+        'nama': event['nama'],
+        'description': event['description'],
+        'location': event['kota'],
+        'img': event['img'],
+        'date': event['date']
+    }
+
+    response_data = {
+        "status": 200,
+        "message": "OK",
+        "data": event_data
+    }
+
+    return jsonify(response_data), 200
 
 @app.route('/pois/categories', methods=['GET'])
 def get_categories():
