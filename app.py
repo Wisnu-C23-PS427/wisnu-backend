@@ -282,6 +282,77 @@ def get_categories():
         }
         return jsonify(response_data), 500
 
+@app.route('/pois', methods=['GET'])
+def get_pois():
+    try:
+        # Get the preview flag, size, and page from the query parameters
+        preview = request.args.get('preview')
+        size = request.args.get('size')
+        page = request.args.get('page')
+
+        # Set the default values if parameters are not provided
+        if preview is None or preview.lower() == 'true':
+            preview = True
+        else:
+            preview = False
+
+        if size is not None:
+            size = int(size)
+
+        if page is not None:
+            page = int(page)
+
+        # Determine the limit and offset based on the preview flag and pagination parameters
+        if preview:
+            limit = 5  # Set the limit to a predefined value for preview mode
+            offset = 0
+        elif size is not None and page is not None:
+            limit = size
+            offset = (page - 1) * size
+        else:
+            limit = None  # No limit if size and page are not provided
+            offset = None
+
+        # Build the SQL query based on the limit and offset
+        sql_query = "SELECT attraction_id AS id, nama AS name, kota AS location, img AS image FROM pois"
+
+        # Add ORDER BY clause to sort by total_rating in descending order
+        sql_query += " ORDER BY total_rating ASC"
+
+        query_params = ()
+        if limit is not None:
+            sql_query += " LIMIT %s"
+            query_params += (limit,)
+        if offset is not None:
+            sql_query += " OFFSET %s"
+            query_params += (offset,)
+
+        # Execute the SQL query
+        db_cursor.execute(sql_query, query_params)
+        pois = db_cursor.fetchall()
+
+        # Create the response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "preview": preview,
+            "size": size,
+            "page": page,
+            "data": pois
+        }
+
+        # Return the response as JSON
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
+
 @app.route('/discover', methods=['GET'])
 def discover():
     try:
