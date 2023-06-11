@@ -378,6 +378,90 @@ def get_pois():
         }
         return jsonify(response_data), 500
 
+# ------POI DETAILS (error 505)--------
+
+@app.route('/poi/<int:poi_id>', methods=['GET'])
+def get_poi_details(poi_id):
+    db_cursor.execute("SELECT * FROM poi WHERE attraction_id = %s", (poi_id,))
+    poi = db_cursor.fetchone()
+
+    if poi is None:
+        return jsonify({'message': 'POI not found'}), 404
+
+    poi_data = {
+        'id': poi['attraction_id'],
+        'name': poi['nama'],
+        'location': poi['kota'],
+        'image': poi['img'],
+        'background_story': poi['description'],
+        'position': {
+            'long': poi['longitude'],
+            'lat': poi['latitude']
+        },
+        'guides': [
+            {
+                'id': 1,
+                'name': 'Guide Name',
+                'price': 10000,
+                'image': 'www.path/to/guide_image.jpg',
+                'time_duration_in_min': 60
+            },
+            {
+                'id': 2,
+                'name': 'Guide Name',
+                'price': 10000,
+                'image': 'www.path/to/guide_image.jpg',
+                'time_duration_in_min': 60
+            },
+            {
+                'id': 3,
+                'name': 'Guide Name',
+                'price': 10000,
+                'image': 'www.path/to/guide_image.jpg',
+                'time_duration_in_min': 60
+            }
+        ],
+        'tickets': {
+            'is_ticketing_enabled': True,
+            'adult_price': 10000,
+            'child_price': 5000
+        },
+        'galleries': [
+            {
+                'id': 1,
+                'name': 'Image Name',
+                'is_from_wisnu_team': True,
+                'is_vr_capable': True,
+                'image': 'www.path/to/poi_image.jpg',
+                'created_at': 'YMDTZ'
+            },
+            {
+                'id': 2,
+                'name': 'Image Name',
+                'is_from_wisnu_team': True,
+                'is_vr_capable': False,
+                'image': 'www.path/to/poi_image.jpg',
+                'created_at': 'YMDTZ'
+            },
+            {
+                'id': 3,
+                'name': 'Image Name',
+                'is_from_wisnu_team': False,
+                'is_vr_capable': False,
+                'image': 'www.path/to/poi_image.jpg',
+                'created_at': 'YMDTZ'
+            }
+        ]
+    }
+
+    response_data = {
+        "status": 200,
+        "message": "OK",
+        "data": poi_data
+    }
+
+    return jsonify(response_data), 200
+
 @app.route('/discover', methods=['GET'])
 def discover():
     try:
