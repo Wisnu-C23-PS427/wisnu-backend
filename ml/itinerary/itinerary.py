@@ -8,10 +8,9 @@ from math import radians, sin, cos, sqrt, atan2
 
 def generate_itinerary(city_name, num_days):
     # Memuat dataset
-    data = pd.read_csv('wisataindonesia.csv')
+    data = pd.read_csv('ml/itinerary/wisataindonesia.csv')
 
     # Pra-pemrosesan data
-    data['kota'] = data['kota'].fillna('Unknown')
     data['provinsi'] = data['provinsi'].fillna('')
 
     # Melakukan vektorisasi TF-IDF pada fitur "kota" dan "provinsi"
@@ -25,7 +24,7 @@ def generate_itinerary(city_name, num_days):
     tfidf_matrix = np.concatenate((tfidf_matrix_kota.toarray(), tfidf_matrix_provinsi.toarray()), axis=1)
 
     # Model
-    model = load_model('recommendation_model.h5')
+    model = load_model('ml/itinerary/recommendation_model.h5')
 
     # Mendapatkan embedding item
     item_embeddings = model.predict(tfidf_matrix)

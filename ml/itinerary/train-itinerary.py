@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 tf.keras.backend.clear_session()
 
 # Memuat dataset
-data = pd.read_csv('wisataindonesia.csv')
+data = pd.read_csv('ml/itinerary/wisataindonesia.csv')
 
 # Pra-pemrosesan data
 data['kota'] = data['kota'].fillna('Unknown')
@@ -55,7 +55,7 @@ model.fit(tfidf_matrix, tfidf_matrix, epochs=10, batch_size=32)
 #     pickle.dump(model, f)
 
 # Mendapatkan embedding item
-model.save('recommendation_model.h5')
+model.save('ml/itinerary/recommendation_model.h5')
 
 # Mendapatkan indeks item berdasarkan input kota
 def get_item_index_by_kota(kota, data):
