@@ -3,6 +3,7 @@ import jwt
 import mysql.connector
 import os
 import bcrypt
+import random
 from dotenv import load_dotenv
 from functools import wraps
 from ml.itinerary.itinerary import generate_itinerary
@@ -559,6 +560,78 @@ def get_itinerary(city_id):
         "message": "OK",
         "data": itinerary_per_day
     })
+
+@app.route('/guide/<int:guide_id>', methods=['GET'])
+def guide_detail(guide_id):
+    try:
+        if guide_id < 1000:
+            guide_id = "PMD" + str(guide_id).zfill(3)
+        else:
+            guide_id = "PMD" + str(guide_id)
+        # Query the database to get the guide information based on the guide_id
+        db_cursor.execute("SELECT * FROM guides WHERE Pemandu_ID = %s", (guide_id,))
+        guide = db_cursor.fetchone()
+
+        if not guide:
+            # Guide not found
+            response_data = {
+                "status": 404,
+                "message": "Guide not found",
+                "data": None
+            }
+            return jsonify(response_data), 404
+
+        # Query the database to get the reviews for the guide
+        db_cursor.execute("SELECT * FROM reviews WHERE Pemandu_ID = %s", (guide_id,))
+        reviews = db_cursor.fetchall()
+
+        # Create the response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": {
+                "id": guide['Pemandu_ID'],
+                "name": guide['Nama_Pemandu'],
+                "price": guide['Price_per_hour'],
+                "image": guide['Avatars'],
+                "time_duration_in_min": guide['Time_duration_in_min'],
+                "avg_star": guide['Rating'],
+                "reviews": []
+            }
+        }
+
+        # Array of 50 random names
+        random_names = [
+            "John", "Alice", "Michael", "Emily", "David", "Olivia", "Daniel", "Sophia", "Matthew", "Emma",
+            "Andrew", "Ava", "Ryan", "Mia", "Christopher", "Isabella", "Ethan", "Charlotte", "Joshua", "Amelia",
+            "William", "Harper", "Joseph", "Evelyn", "James", "Abigail", "Benjamin", "Elizabeth", "Samuel", "Sofia",
+            "Jacob", "Ella", "Alexander", "Avery", "Henry", "Grace", "Jackson", "Scarlett", "Sebastian", "Victoria",
+            "Aiden", "Chloe", "Luke", "Lily", "Carter", "Zoe", "Jayden", "Madison", "Gabriel", "Layla"
+        ]
+
+        # Shuffle the array of names
+        random.shuffle(random_names)
+
+        # Add the reviews to the response data
+        for review in reviews:
+            response_data['data']['reviews'].append({
+                "id": review['User_ID'],
+                "name": random_names.pop(),
+                "review": review['Review'],
+                "star": review['Rating']
+            })
+
+        # Return the response as JSON
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
 
 @app.errorhandler(400)
 def handle_client_error(e):
