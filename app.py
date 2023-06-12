@@ -256,31 +256,6 @@ def account():
             "data": None
         }
         return jsonify(response_data), 500
-    
-# @app.route('/events/<int:id>', methods=['GET'])
-# def get_event(id):
-#     db_cursor.execute("SELECT * FROM events WHERE attraction_id = %s", (id,))
-#     event = db_cursor.fetchone()
-
-#     if event is None:
-#         return jsonify({'message': 'Event not found'}), 404
-
-#     event_data = {
-#         'attraction_id': event['attraction_id'],
-#         'nama': event['nama'],
-#         'description': event['description'],
-#         'location': event['kota'],
-#         'img': event['img'],
-#         'date': event['date']
-#     }
-
-#     response_data = {
-#         "status": 200,
-#         "message": "OK",
-#         "data": event_data
-#     }
-
-#     return jsonify(response_data), 200
 
 @app.route('/pois/categories', methods=['GET'])
 def get_categories():
@@ -379,89 +354,78 @@ def get_pois():
         }
         return jsonify(response_data), 500
 
-# ------POI DETAILS (error 505)--------
+@app.route('/search', methods=['POST'])
+def search():
+    try:
+        # Get the keyword and filter from the request form data
+        keyword = request.form.get('keyword')
+        category_filter = request.form.get('filter')
 
-# @app.route('/poi/<int:poi_id>', methods=['GET'])
-# def get_poi_details(poi_id):
-#     db_cursor.execute("SELECT * FROM poi WHERE attraction_id = %s", (poi_id,))
-#     poi = db_cursor.fetchone()
+        # Set the default filter value to "all" if it is empty
+        if not category_filter:
+            category_filter = 'all'
 
-#     if poi is None:
-#         return jsonify({'message': 'POI not found'}), 404
+        # Query the database to search for cities and POIs based on the keyword and category filter
+        city_query = """
+            SELECT DISTINCT attraction_id AS id, kota AS name, provinsi AS location
+            FROM pois
+            WHERE (kota LIKE %s OR provinsi LIKE %s)
+        """
 
-#     poi_data = {
-#         'id': poi['attraction_id'],
-#         'name': poi['nama'],
-#         'location': poi['kota'],
-#         'image': poi['img'],
-#         'background_story': poi['description'],
-#         'position': {
-#             'long': poi['longitude'],
-#             'lat': poi['latitude']
-#         },
-#         'guides': [
-#             {
-#                 'id': 1,
-#                 'name': 'Guide Name',
-#                 'price': 10000,
-#                 'image': 'www.path/to/guide_image.jpg',
-#                 'time_duration_in_min': 60
-#             },
-#             {
-#                 'id': 2,
-#                 'name': 'Guide Name',
-#                 'price': 10000,
-#                 'image': 'www.path/to/guide_image.jpg',
-#                 'time_duration_in_min': 60
-#             },
-#             {
-#                 'id': 3,
-#                 'name': 'Guide Name',
-#                 'price': 10000,
-#                 'image': 'www.path/to/guide_image.jpg',
-#                 'time_duration_in_min': 60
-#             }
-#         ],
-#         'tickets': {
-#             'is_ticketing_enabled': True,
-#             'adult_price': 10000,
-#             'child_price': 5000
-#         },
-#         'galleries': [
-#             {
-#                 'id': 1,
-#                 'name': 'Image Name',
-#                 'is_from_wisnu_team': True,
-#                 'is_vr_capable': True,
-#                 'image': 'www.path/to/poi_image.jpg',
-#                 'created_at': 'YMDTZ'
-#             },
-#             {
-#                 'id': 2,
-#                 'name': 'Image Name',
-#                 'is_from_wisnu_team': True,
-#                 'is_vr_capable': False,
-#                 'image': 'www.path/to/poi_image.jpg',
-#                 'created_at': 'YMDTZ'
-#             },
-#             {
-#                 'id': 3,
-#                 'name': 'Image Name',
-#                 'is_from_wisnu_team': False,
-#                 'is_vr_capable': False,
-#                 'image': 'www.path/to/poi_image.jpg',
-#                 'created_at': 'YMDTZ'
-#             }
-#         ]
-#     }
+        poi_query = """
+            SELECT attraction_id AS id, nama AS name, kota AS location, img AS image
+            FROM pois
+            WHERE (nama LIKE %s OR kota LIKE %s)
+        """
 
-#     response_data = {
-#         "status": 200,
-#         "message": "OK",
-#         "data": poi_data
-#     }
+        # Add the keyword parameter to the query parameters
+        city_query_params = ('%' + keyword + '%', '%' + keyword + '%')
+        poi_query_params = ('%' + keyword + '%', '%' + keyword + '%')
 
-#     return jsonify(response_data), 200
+        # Add the category filter to the query parameters and queries if it's not 'all'
+        if category_filter != 'all':
+            city_query += " AND category = %s"
+            poi_query += " AND category = %s"
+            city_query_params += (category_filter,)
+            poi_query_params += (category_filter,)
+
+        # Execute the SQL query to search for cities
+        db_cursor.execute(city_query, city_query_params)
+        cities = db_cursor.fetchall()
+
+        # Remove items with duplicated name values
+        unique_cities = []
+        city_names = set()
+        for city in cities:
+            if city['name'] not in city_names:
+                unique_cities.append(city)
+                city_names.add(city['name'])
+
+        # Execute the SQL query to search for POIs
+        db_cursor.execute(poi_query, poi_query_params)
+        pois = db_cursor.fetchall()
+
+        # Create the response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": {
+                "cities": unique_cities,
+                "poi": pois
+            }
+        }
+
+        # Return the response as JSON
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
 
 @app.route('/discover', methods=['GET'])
 def discover():
