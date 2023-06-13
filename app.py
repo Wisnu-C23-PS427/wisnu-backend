@@ -899,15 +899,31 @@ def guide_detail(guide_id):
 @jwt_required
 def create_order():
     try:
+
+        # Inisialisasi variabel order_id
+        order_id = None
+
         # Get the request body
         request_data = request.get_json()
         
         # Extract ticket and guide data from the request
         ticket_data = request_data.get('ticket', [])
         guide_data = request_data.get('guide')
+        is_guide_order = True  # Ubah nilai sesuai logika bisnis
+        is_ticket_order = False  # Ubah nilai sesuai logika bisnis
+        price = 1000  # Ubah nilai sesuai logika bisnis
+        created_at = datetime.datetime.now()
         
         # Perform order creation logic here
-        
+        # Simpan data transaksi ke database
+        # Ganti bagian ini dengan operasi database yang sesuai untuk menyimpan data ke tabel 'transactions'
+        query = """
+            INSERT INTO transactions (id, is_guide_order, is_ticket_order, price, created_at)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        db_cursor.execute(query, (order_id, is_guide_order, is_ticket_order, price, created_at))
+        db_connection.commit()            
+
         # Generate a random order ID
         order_id = random.randint(1, 1000)
         
@@ -1021,7 +1037,7 @@ def create_order():
                 "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") # Replace with the actual creation timestamp
             }
         }
-        
+
         # Return the response as JSON
         return jsonify(response_data), response_data['status']
     except Exception as e:
@@ -1088,6 +1104,29 @@ def list_transactions():
             "data": None
         }
         return jsonify(response_data), 500    
+
+# @app.route('/tickets', methods=['GET'])
+# def list_tickets():
+#     filter_param = request.args.get('filter', 'active')
+
+#     if filter_param == 'active':
+#         tickets = Ticket.query.filter_by(is_active=True).all()
+#     elif filter_param == 'expired':
+#         tickets = Ticket.query.filter_by(is_active=False).all()
+#     else:
+#         return jsonify({
+#             'status': 400,
+#             'message': 'Invalid filter parameter',
+#             'data': None
+#         })
+
+#     ticket_list = [ticket.to_dict() for ticket in tickets]
+
+#     return jsonify({
+#         'status': 200,
+#         'message': 'OK',
+#         'data': ticket_list
+#     })
 
 @app.errorhandler(400)
 def handle_client_error(e):
