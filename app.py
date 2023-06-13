@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, request, jsonify
 import jwt
 import mysql.connector
@@ -351,6 +352,46 @@ def get_pois():
         response_data = {
             "status": 500,
             "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
+
+@app.route('/events/<int:id>', methods=['GET'])
+def get_event_detail(id):
+    try:
+        # Retrieve event detail from the database based on the provided ID
+        query = "SELECT attraction_id, nama AS name, description, kota AS location, img AS image, date FROM events WHERE attraction_id = %s"
+        db_cursor.execute(query, (id,))
+        event = db_cursor.fetchone()
+
+        if event:
+            # Format the response data
+            response_data = {
+                "status": 200,
+                "message": "OK",
+                "data": {
+                    "id": event['attraction_id'],
+                    "name": event['name'],
+                    "description": event['description'],
+                    "location": event['location'],
+                    "image": event['image'],
+                    "date": event['date']
+                }
+            }
+            return jsonify(response_data), 200
+        else:
+            # Event not found
+            response_data = {
+                "status": 404,
+                "message": "Event not found",
+                "data": None
+            }
+            return jsonify(response_data), 404
+    except Exception as e:
+        # Error occurred
+        response_data = {
+            "status": 500,
+            "message": str(e),
             "data": None
         }
         return jsonify(response_data), 500
