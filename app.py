@@ -1032,6 +1032,62 @@ def create_order():
             "data": None
         }
         return jsonify(response_data), 500
+    
+@app.route('/transactions', methods=['GET'])
+def list_transactions():
+    try:
+        filter_type = request.args.get('filter', 'all')  # Get the filter parameter, default to 'all' if not provided
+
+        # Construct the SQL query based on the filter type
+        if filter_type == 'guide':
+            query = """
+                SELECT * FROM transactions
+                WHERE is_guide_order = true
+            """
+        elif filter_type == 'ticket':
+            query = """
+                SELECT * FROM transactions
+                WHERE is_ticket_order = true
+            """
+        else:
+            query = """
+                SELECT * FROM transactions
+            """
+
+        # Execute the SQL query
+        db_cursor.execute(query)
+
+        # Fetch the results
+        results = db_cursor.fetchall()
+
+        # Process the results
+        transactions = []
+        for row in results:
+            transaction = {
+                "id": row['id'],
+                "is_guide_order": row['is_guide_order'],
+                "is_ticket_order": row['is_ticket_order'],
+                "price": row['price'],
+                "created_at": row['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+            }
+            transactions.append(transaction)
+
+        # Generate response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": transactions
+        }
+
+        return jsonify(response_data), response_data['status']
+    except Exception as e:
+        # Error occurred during transaction listing
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500    
 
 @app.errorhandler(400)
 def handle_client_error(e):
