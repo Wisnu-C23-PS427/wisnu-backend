@@ -693,57 +693,82 @@ def get_cities():
 
 @app.route('/city/<int:city_id>/itinerary', methods=['GET'])
 def get_itinerary(city_id):
-    # Query the database to get the city name based on the city_id
-    db_cursor.execute("SELECT kota FROM pois WHERE attraction_id = %s", (city_id,))
-    result = db_cursor.fetchone()
+    try:
+        # Query the database to get the city name based on the city_id
+        db_cursor.execute("SELECT kota FROM pois WHERE id_kota = %s", (city_id,))
+        result = db_cursor.fetchone()
+        db_cursor.fetchall()
 
-    if not result:
-        # City not found
+        if not result:
+            # City not found
+            response_data = {
+                "status": 404,
+                "message": "City not found",
+                "data": None
+            }
+            return jsonify(response_data), 404
+
+        city_name = result['kota']
+
+        # Get the value of the 'days' query parameter
+        num_days = int(request.args.get('days', 1))
+
+        # Generate the itinerary data based on the city name and number of days
+        itinerary_data = generate_itinerary(city_name, num_days)
+
+        guides_recommendations_raw = guides_recommendation(city_name).to_dict('records')
+        guides_recommendations = []
+        for guide in guides_recommendations_raw:
+            print("------------------------------------------------------------------")
+            print(guide['Pemandu_ID'])
+            guides_recommendations.append({
+                "id": guide['Pemandu_ID'],
+                "name": guide['Nama_Pemandu'],
+                "price": guide['Price_per_hour'],
+                "image": guide['Avatars'],
+                "time_duration_in_min": guide['Time_duration_in_min']
+            })
+
+        # Divide the itinerary data into an array of days
+        itinerary_per_day = []
+        for day in range(1, num_days + 1):
+            poi_per_day = []
+            for poi in itinerary_data:
+                if poi['hari'] == day:
+                    poi_data = {
+                        "id": poi['attraction_id'],
+                        "name": poi['nama'],
+                        "location": poi['kota'],
+                        "image": poi['img'],
+                        "tickets": {
+                            "is_ticketing_enabled": True,
+                            "adult_price": poi['adult_price'],
+                            "child_price": poi['child_price']
+                        },
+                        "guides": guides_recommendations
+                    }
+                    poi_per_day.append(poi_data)
+            day_data = {
+                "day": day,
+                "poi": poi_per_day
+            }
+            itinerary_per_day.append(day_data)
+
+        # Return the response as JSON
+        return jsonify({
+            "status": 200,
+            "message": "OK",
+            "data": itinerary_per_day
+        })
+
+    except Exception as e:
+        # Server error
         response_data = {
-            "status": 404,
-            "message": "City not found",
+            "status": 500,
+            "message": f"Reason: {str(e)}",
             "data": None
         }
-        return jsonify(response_data), 404
-
-    city_name = result['kota']
-
-    # Get the value of the 'days' query parameter
-    num_days = int(request.args.get('days', 1))
-
-    # Generate the itinerary data based on the city name and number of days
-    itinerary_data = generate_itinerary(city_name, num_days)
-
-    # Divide the itinerary data into an array of days
-    itinerary_per_day = []
-    for day in range(1, num_days + 1):
-        poi_per_day = []
-        for poi in itinerary_data:
-            if poi['hari'] == day:
-                poi_data = {
-                    "id": poi['attraction_id'],
-                    "name": poi['nama'],
-                    "location": poi['kota'],
-                    "image": poi['img'],
-                    "tickets": {
-                        "is_ticketing_enabled": True,
-                        "adult_price": poi['adult_price'],
-                        "child_price": poi['child_price']
-                    }
-                }
-                poi_per_day.append(poi_data)
-        day_data = {
-            "day": day,
-            "poi": poi_per_day
-        }
-        itinerary_per_day.append(day_data)
-
-    # Return the response as JSON
-    return jsonify({
-        "status": 200,
-        "message": "OK",
-        "data": itinerary_per_day
-    })
+        return jsonify(response_data), 500
 
 @app.route('/city/<int:city_id>', methods=['GET'])
 def get_city(city_id):
