@@ -894,6 +894,145 @@ def guide_detail(guide_id):
         }
         return jsonify(response_data), 500
 
+
+@app.route('/transaction/new', methods=['POST'])
+@jwt_required
+def create_order():
+    try:
+        # Get the request body
+        request_data = request.get_json()
+        
+        # Extract ticket and guide data from the request
+        ticket_data = request_data.get('ticket', [])
+        guide_data = request_data.get('guide')
+        
+        # Perform order creation logic here
+        
+        # Generate a random order ID
+        order_id = random.randint(1, 1000)
+        
+        # Process ticket data
+        tickets = []
+        for ticket in ticket_data:
+            poi_id = ticket['poi_id']
+            num_adult = ticket['num_adult']
+            num_child = ticket['num_child']
+            
+            # Perform ticket processing logic here
+            
+            # Generate ticket details
+            ticket_details = {
+                "id": f"WSNU-ABC-{order_id}",
+                "poi": {
+                    "id": poi_id,
+                    "name": "POI Name",
+                    "location": "POI Location"
+                },
+                "valid_date": "YMD",
+                "adult": [],
+                "child": []
+            }
+            
+            # Add adult tickets
+            for i in range(num_adult):
+                ticket_details['adult'].append({
+                    "name": f"Ticket Buyer {i+1}",
+                    "price": 10000
+                })
+            
+            # Add child tickets
+            for i in range(num_child):
+                ticket_details['child'].append({
+                    "name": f"Ticket Buyer {i+1} - child",
+                    "price": 5000
+                })
+            
+            # Add ticket details to the tickets list
+            tickets.append(ticket_details)
+        
+        # Process guide data
+        guide = None
+        if guide_data:
+            poi_id = guide_data['poi_id']
+            guide_id = guide_data['guide_id']
+            min_multiplier = guide_data['min_multiplier']
+            
+            # Perform guide processing logic here
+            
+            # Perform additional ticket processing steps if needed
+            for ticket in ticket_data:
+                poi_id = ticket['poi_id']
+                num_adult = ticket['num_adult']
+                num_child = ticket['num_child']
+                
+                # Perform necessary operations based on ticket data
+                # For example, you can retrieve the details of the Point of Interest (POI) from the database based on poi_id
+                
+                # Dummy data for ticket processing
+                poi_name = "POI Name"
+                poi_location = "POI Location"
+            # Generate ticket details
+            ticket_details = {
+                "id": f"WSNU-ABC-{order_id}",
+                "poi": {
+                    "id": poi_id,
+                    "name": "POI Name",
+                    "location": "POI Location"
+                },
+                "valid_date": "YMD",
+                "adult": [],
+                "child": []
+            }
+            
+            # Add adult tickets
+            for i in range(num_adult):
+                ticket_details['adult'].append({
+                    "name": f"Ticket Buyer {i+1}",
+                    "price": 10000
+                })
+            
+            # Add child tickets
+            for i in range(num_child):
+                ticket_details['child'].append({
+                    "name": f"Ticket Buyer {i+1} - child",
+                    "price": 5000
+                })
+            
+            # Add ticket details to the tickets list
+            tickets.append(ticket_details)
+
+            # Generate guide details
+            guide = {
+                "id": guide_data,
+                "name": "Guide Name",
+                "image": "www.path/to/guide_image.jpg",
+                "start_date": "YMDTZ",
+                "end_date": "YMDTZ"
+            }
+
+        # Generate response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": {
+                "id": order_id,  # Replace with the actual order ID
+                "ticket": tickets,  # Replace with the actual ticket data
+                "guide": None,  # Replace with the actual guide data
+                "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") # Replace with the actual creation timestamp
+            }
+        }
+        
+        # Return the response as JSON
+        return jsonify(response_data), response_data['status']
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
+
 @app.errorhandler(400)
 def handle_client_error(e):
     # Client error
