@@ -653,7 +653,7 @@ def get_cities():
 
         # Add GROUP BY clause to group by city name
         sql_query += " GROUP BY name"
-        
+
         # Add ORDER BY clause to sort by id_kota in ascending order
         sql_query += " ORDER BY id_kota ASC"
 
@@ -696,8 +696,6 @@ def get_itinerary(city_id):
     # Query the database to get the city name based on the city_id
     db_cursor.execute("SELECT kota FROM pois WHERE attraction_id = %s", (city_id,))
     result = db_cursor.fetchone()
-    print("=============================================")
-    print(result)
 
     if not result:
         # City not found
@@ -746,6 +744,58 @@ def get_itinerary(city_id):
         "message": "OK",
         "data": itinerary_per_day
     })
+
+@app.route('/city/<int:city_id>', methods=['GET'])
+def get_city(city_id):
+    try:
+        # Build the SQL query to fetch the city details
+        city_query = "SELECT id_kota AS id, kota AS name, provinsi AS location, CONCAT('The ', kota, ' city is located at ', provinsi, '. Visit this city for your next holiday. #WisataNusantara') AS description, img AS image FROM pois WHERE id_kota = %s"
+
+        # Execute the SQL query to fetch the city details
+        db_cursor.execute(city_query, (city_id,))
+        city = db_cursor.fetchone()
+
+        if city is None:
+            # City not found
+            response_data = {
+                "status": 404,
+                "message": "City not found",
+                "data": None
+            }
+            return jsonify(response_data), 404
+
+        # Build the SQL query to fetch the POIs for the city
+        poi_query = "SELECT attraction_id AS id, nama AS name, kota AS location, img AS image FROM pois WHERE id_kota = %s"
+
+        # Execute the SQL query to fetch the POIs for the city
+        db_cursor.execute(poi_query, (city_id,))
+        pois = db_cursor.fetchall()
+
+        # Create the response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": {
+                "id": city["id"],
+                "name": city["name"],
+                "location": city["location"],
+                "description": city["description"],
+                "image": city["image"],
+                "poi": pois
+            }
+        }
+
+        # Return the response as JSON
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
 
 @app.route('/guide/<int:guide_id>', methods=['GET'])
 def guide_detail(guide_id):
