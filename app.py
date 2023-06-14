@@ -553,7 +553,7 @@ def discover():
     try:
         # Query the database to get the top-rated cities and POIs
         db_cursor.execute("""
-            SELECT MIN(p.attraction_id) AS id, p.kota AS name, p.provinsi AS location, MIN(p.img) AS image, AVG(p.total_rating) AS total_rating
+            SELECT MIN(p.id_kota) AS id, p.kota AS name, p.provinsi AS location, MIN(p.img) AS image, AVG(p.total_rating) AS total_rating
             FROM pois AS p
             WHERE p.total_rating <> 'None'
             GROUP BY p.kota, p.provinsi
