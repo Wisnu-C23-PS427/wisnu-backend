@@ -1107,26 +1107,62 @@ def list_transactions():
 
 # @app.route('/tickets', methods=['GET'])
 # def list_tickets():
-#     filter_param = request.args.get('filter', 'active')
+#     try:
+#         filter_type = request.args.get('filter', 'active')  # Get the filter parameter, default to 'active' if not provided
 
-#     if filter_param == 'active':
-#         tickets = Ticket.query.filter_by(is_active=True).all()
-#     elif filter_param == 'expired':
-#         tickets = Ticket.query.filter_by(is_active=False).all()
-#     else:
-#         return jsonify({
-#             'status': 400,
-#             'message': 'Invalid filter parameter',
-#             'data': None
-#         })
+#         # Construct the SQL query based on the filter type
+#         if filter_type == 'active':
+#             query = """
+#                 SELECT * FROM tickets
+#                 WHERE is_active = true
+#             """
+#         elif filter_type == 'expired':
+#             query = """
+#                 SELECT * FROM tickets
+#                 WHERE is_active = false
+#             """
+#         else:
+#             query = """
+#                 SELECT * FROM tickets
+#             """
 
-#     ticket_list = [ticket.to_dict() for ticket in tickets]
+#         # Execute the SQL query
+#         db_cursor.execute(query)
 
-#     return jsonify({
-#         'status': 200,
-#         'message': 'OK',
-#         'data': ticket_list
-#     })
+#         # Fetch the results
+#         results = db_cursor.fetchall()
+
+#         # Process the results
+#         tickets = []
+#         for row in results:
+#             ticket = {
+#                 "id": row['id'],
+#                 "is_active": row['is_active'],
+#                 "poi": {
+#                     "id": row['poi_id'],
+#                     "name": "POI Name",
+#                     "location": "POI Location"
+#                 },
+#                 "created_at": row['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+#             }
+#             tickets.append(ticket)
+
+#         # Generate response data
+#         response_data = {
+#             "status": 200,
+#             "message": "OK",
+#             "data": tickets
+#         }
+
+#         return jsonify(response_data), response_data['status']
+#     except Exception as e:
+#         # Error occurred during ticket listing
+#         response_data = {
+#             "status": 500,
+#             "message": f"Reason: {str(e)}",
+#             "data": None
+#         }
+#         return jsonify(response_data), 500
 
 @app.errorhandler(400)
 def handle_client_error(e):
