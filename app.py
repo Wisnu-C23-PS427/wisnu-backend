@@ -142,6 +142,7 @@ def login():
         # Query the database to find the user
         db_cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         user = db_cursor.fetchone()
+        db_cursor.fetchall()
 
         if user is None or not bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             # Unauthorized access (invalid email or password)
