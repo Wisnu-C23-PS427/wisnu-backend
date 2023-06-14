@@ -360,7 +360,7 @@ def get_pois():
         }
         return jsonify(response_data), 500
 
-@app.route('/events/<int:id>', methods=['GET'])
+@app.route('/event/<int:id>', methods=['GET'])
 @jwt_required
 def get_event_detail(id):
     try:
