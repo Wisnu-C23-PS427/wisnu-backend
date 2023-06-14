@@ -775,8 +775,6 @@ def get_itinerary(city_id):
         guides_recommendations_raw = guides_recommendation(city_name).to_dict('records')
         guides_recommendations = []
         for guide in guides_recommendations_raw:
-            print("------------------------------------------------------------------")
-            print(guide['Pemandu_ID'])
             guides_recommendations.append({
                 "id": guide['Pemandu_ID'],
                 "name": guide['Nama_Pemandu'],
