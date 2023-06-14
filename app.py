@@ -982,7 +982,7 @@ def create_order():
             
             # Retrieve POI information from the database based on poi_id
             poi_query = """
-                SELECT attraction_id as id, nama as name, kota as location FROM pois WHERE attraction_id = %s
+                SELECT attraction_id as id, nama as name, kota as location, adult_price, child_price FROM pois WHERE attraction_id = %s
             """
             
             poi_params = (poi_id,)
@@ -1000,23 +1000,26 @@ def create_order():
                     "name": poi_row['name'],
                     "location": poi_row['location']
                 },
-                "valid_date": "YMD",
+                "valid_date": (datetime.datetime.now() + datetime.timedelta(days=30)).strftime("%Y-%m-%d"),  # Valid for 30 days from ticket creation
                 "adult": [],
                 "child": []
             }
             
+            adult_price = poi_row['adult_price']
+            child_price = poi_row['child_price']
+
             # Add adult tickets
             for i in range(num_adult):
                 ticket_details['adult'].append({
                     "name": f"Ticket Buyer {i+1}",
-                    "price": 10000
+                    "price": adult_price
                 })
             
             # Add child tickets
             for i in range(num_child):
                 ticket_details['child'].append({
                     "name": f"Ticket Buyer {i+1} - child",
-                    "price": 5000
+                    "price": child_price
                 })
             
             # Add ticket details to the tickets list
@@ -1197,7 +1200,87 @@ def list_tickets():
         }
         return jsonify(response_data), 500
 
+@app.route('/ticket/<string:ticket_id>', methods=['GET'])
+def get_ticket(ticket_id):
+    try:
+        # Construct the SQL query to retrieve ticket details based on ticket_id
+        query = """
+            SELECT * FROM tickets WHERE id = %s
+        """
+        params = (ticket_id,)
+        db_cursor.execute(query, params)
 
+        # Fetch the result
+        ticket = db_cursor.fetchone()
+
+        # Check if ticket is None
+        if ticket is None:
+            response_data = {
+                "status": 404,
+                "message": "Ticket not found",
+                "data": None
+            }
+            return jsonify(response_data), 404
+
+        # Retrieve POI information from the database based on poi_id
+        poi_query = """
+            SELECT attraction_id as id, nama as name, kota as location FROM pois WHERE attraction_id = %s
+        """
+        poi_params = (ticket['poi_id'],)
+        db_cursor.execute(poi_query, poi_params)
+        poi_row = db_cursor.fetchone()
+
+        # Check if poi_row is None
+        if poi_row is None:
+            # Handle case when no matching POI is found
+            poi_row = {
+                "id": None,
+                "name": None,
+                "location": None
+            }
+
+        # Generate response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": {
+                "id": ticket['id'],
+                "poi": {
+                    "id": poi_row['id'],
+                    "name": poi_row['name'],
+                    "location": poi_row["location"]
+                },
+                "valid_date": ticket['valid_date'].strftime("%Y-%m-%d"),
+                "adult": [
+                    {
+                        "name": "Ticket Buyer 1",
+                        "price": 10000
+                    },
+                    {
+                        "name": "Ticket Buyer 2",
+                        "price": 10000
+                    }
+                ],
+                "child": [
+                    {
+                        "name": "Ticket Buyer 1 - child",
+                        "price": 5000
+                    }
+                ],
+                "total_price": 25000,
+                "created_at": ticket['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+            }
+        }
+
+        return jsonify(response_data), response_data['status']
+    except Exception as e:
+        # Error occurred during ticket retrieval
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
 
 @app.errorhandler(400)
 def handle_client_error(e):
