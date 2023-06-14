@@ -92,6 +92,7 @@ def register():
 
         db_cursor.execute("SELECT created_at FROM users WHERE email = %s", (email,))
         created_at = db_cursor.fetchone()['created_at']
+        db_cursor.fetchall()
 
         # Generate JWT token
         token = jwt.encode({'email': email}, app.config['SECRET_KEY'], algorithm='HS256')
