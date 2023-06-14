@@ -967,23 +967,24 @@ def create_order():
 
         # Get the request body
         request_data = request.get_json()
+
+        query = """
+            INSERT INTO transactions (id, is_guide_order, is_ticket_order, price, created_at)
+            VALUES (%s, %s, %s, %s, %s)
+        """
         
         # Extract ticket and guide data from the request
         ticket_data = request_data.get('ticket', [])
         guide_data = request_data.get('guide')
         is_guide_order = True  # Ubah nilai sesuai logika bisnis
         is_ticket_order = False  # Ubah nilai sesuai logika bisnis
-        price = 1000  # Ubah nilai sesuai logika bisnis
+        price = request_data.get('transactions')  # Ubah nilai sesuai logika bisnis
         created_at = datetime.datetime.now()
         
         # Perform order creation logic here
         # Simpan data transaksi ke database
         # Ganti bagian ini dengan operasi database yang sesuai untuk menyimpan data ke tabel 'transactions'
         
-        query = """
-            INSERT INTO transactions (id, is_guide_order, is_ticket_order, price, created_at)
-            VALUES (%s, %s, %s, %s, %s)
-        """
 
         db_cursor.execute(query, (order_id, is_guide_order, is_ticket_order, price, created_at))
         db_connection.commit()            
