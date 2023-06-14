@@ -960,32 +960,45 @@ def create_order():
         # Perform order creation logic here
         # Simpan data transaksi ke database
         # Ganti bagian ini dengan operasi database yang sesuai untuk menyimpan data ke tabel 'transactions'
+        
         query = """
             INSERT INTO transactions (id, is_guide_order, is_ticket_order, price, created_at)
             VALUES (%s, %s, %s, %s, %s)
         """
+
         db_cursor.execute(query, (order_id, is_guide_order, is_ticket_order, price, created_at))
         db_connection.commit()            
 
-        # Generate a random order ID
-        order_id = random.randint(1, 1000)
         
         # Process ticket data
         tickets = []
         for ticket in ticket_data:
+        # Generate a random order ID
+            order_id = random.randint(1, 1000)
             poi_id = ticket['poi_id']
             num_adult = ticket['num_adult']
             num_child = ticket['num_child']
+
+            
+            # Retrieve POI information from the database based on poi_id
+            poi_query = """
+                SELECT attraction_id as id, nama as name, kota as location FROM pois WHERE attraction_id = %s
+            """
+            
+            poi_params = (poi_id,)
+            db_cursor.execute(poi_query, poi_params)
+            poi_row = db_cursor.fetchone()
+
             
             # Perform ticket processing logic here
             
             # Generate ticket details
             ticket_details = {
-                "id": f"WSNU-ABC-{order_id}",
+                "id": order_id,
                 "poi": {
                     "id": poi_id,
-                    "name": "POI Name",
-                    "location": "POI Location"
+                    "name": poi_row['name'],
+                    "location": poi_row['location']
                 },
                 "valid_date": "YMD",
                 "adult": [],
@@ -1008,7 +1021,17 @@ def create_order():
             
             # Add ticket details to the tickets list
             tickets.append(ticket_details)
-        
+
+                        # Insert ticket data into the 'tickets' table
+            ticket_query = """
+                INSERT INTO tickets (id, is_active, poi_id, created_at)
+                VALUES (%s, %s, %s, %s)
+            """
+
+            ticket_params = (ticket_details['id'], 1, poi_id, created_at)
+            db_cursor.execute(ticket_query, ticket_params)
+            db_connection.commit()
+
         # Process guide data
         guide = None
         if guide_data:
@@ -1016,59 +1039,6 @@ def create_order():
             guide_id = guide_data['guide_id']
             min_multiplier = guide_data['min_multiplier']
             
-            # Perform guide processing logic here
-            
-            # Perform additional ticket processing steps if needed
-            for ticket in ticket_data:
-                poi_id = ticket['poi_id']
-                num_adult = ticket['num_adult']
-                num_child = ticket['num_child']
-                
-                # Perform necessary operations based on ticket data
-                # For example, you can retrieve the details of the Point of Interest (POI) from the database based on poi_id
-                
-                # Dummy data for ticket processing
-                poi_name = "POI Name"
-                poi_location = "POI Location"
-            # Generate ticket details
-            ticket_details = {
-                "id": f"WSNU-ABC-{order_id}",
-                "poi": {
-                    "id": poi_id,
-                    "name": "POI Name",
-                    "location": "POI Location"
-                },
-                "valid_date": "YMD",
-                "adult": [],
-                "child": []
-            }
-            
-            # Add adult tickets
-            for i in range(num_adult):
-                ticket_details['adult'].append({
-                    "name": f"Ticket Buyer {i+1}",
-                    "price": 10000
-                })
-            
-            # Add child tickets
-            for i in range(num_child):
-                ticket_details['child'].append({
-                    "name": f"Ticket Buyer {i+1} - child",
-                    "price": 5000
-                })
-            
-            # Add ticket details to the tickets list
-            tickets.append(ticket_details)
-
-            # Generate guide details
-            guide = {
-                "id": guide_data,
-                "name": "Guide Name",
-                "image": "www.path/to/guide_image.jpg",
-                "start_date": "YMDTZ",
-                "end_date": "YMDTZ"
-            }
-
         # Generate response data
         response_data = {
             "status": 200,
@@ -1148,64 +1118,86 @@ def list_transactions():
         }
         return jsonify(response_data), 500    
 
-# @app.route('/tickets', methods=['GET'])
-# def list_tickets():
-#     try:
-#         filter_type = request.args.get('filter', 'active')  # Get the filter parameter, default to 'active' if not provided
+@app.route('/tickets', methods=['GET'])
+def list_tickets():
+    try:
+        filter_type = request.args.get('filter', 'active')  # Get the filter parameter, default to 'active' if not provided
 
-#         # Construct the SQL query based on the filter type
-#         if filter_type == 'active':
-#             query = """
-#                 SELECT * FROM tickets
-#                 WHERE is_active = true
-#             """
-#         elif filter_type == 'expired':
-#             query = """
-#                 SELECT * FROM tickets
-#                 WHERE is_active = false
-#             """
-#         else:
-#             query = """
-#                 SELECT * FROM tickets
-#             """
+        # Construct the SQL query based on the filter type
+        if filter_type == 'active':
+            query = """
+                SELECT * FROM tickets
+                WHERE is_active = true
+            """
+        elif filter_type == 'expired':
+            query = """
+                SELECT * FROM tickets
+                WHERE is_active = false
+            """
+        else:
+            query = """
+                SELECT * FROM tickets
+            """
 
-#         # Execute the SQL query
-#         db_cursor.execute(query)
+        # Execute the SQL query
+        db_cursor.execute(query)
 
-#         # Fetch the results
-#         results = db_cursor.fetchall()
+        # Fetch the results
+        results = db_cursor.fetchall()
 
-#         # Process the results
-#         tickets = []
-#         for row in results:
-#             ticket = {
-#                 "id": row['id'],
-#                 "is_active": row['is_active'],
-#                 "poi": {
-#                     "id": row['poi_id'],
-#                     "name": "POI Name",
-#                     "location": "POI Location"
-#                 },
-#                 "created_at": row['created_at'].strftime("%Y-%m-%d %H:%M:%S")
-#             }
-#             tickets.append(ticket)
+            
+        # Process the results
+        tickets = []
+        for row in results:
+            poi_id = row['poi_id']
+            # Retrieve POI information from the database based on poi_id
+            poi_query = """
+                SELECT attraction_id as id, nama as name, kota as location FROM pois WHERE attraction_id = %s
+            """
+            
+            poi_params = (poi_id,)
+            db_cursor.execute(poi_query, poi_params)
+            poi_row = db_cursor.fetchone()
 
-#         # Generate response data
-#         response_data = {
-#             "status": 200,
-#             "message": "OK",
-#             "data": tickets
-#         }
+            # Check if poi_row is None
+            if poi_row is None:
+                # Handle case when no matching POI is found
+                poi_row = {
+                    "id": None,
+                    "name": None,
+                    "location": None
+                }
 
-#         return jsonify(response_data), response_data['status']
-#     except Exception as e:
-#         # Error occurred during ticket listing
-#         response_data = {
-#             "status": 500,
-#             "message": f"Reason: {str(e)}",
-#             "data": None
-#         }
-#         return jsonify(response_data), 500
+            ticket = {
+                "id": row['id'],
+                "is_active": row['is_active'],
+                "poi": {
+                    "id": poi_row['id'],
+                    "name": poi_row['name'],
+                    "location": poi_row["location"]
+                },
+                "created_at": row['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+            }
+            tickets.append(ticket)
+
+        # Generate response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": tickets
+        }
+
+        return jsonify(response_data), response_data['status']
+    except Exception as e:
+        # Error occurred during ticket listing
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
+
+
 
 @app.errorhandler(400)
 def handle_client_error(e):
