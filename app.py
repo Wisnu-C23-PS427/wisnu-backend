@@ -1111,8 +1111,8 @@ def list_transactions():
         for row in results:
             transaction = {
                 "id": row['id'],
-                "is_guide_order": row['is_guide_order'],
-                "is_ticket_order": row['is_ticket_order'],
+                "is_guide_order": row['is_guide_order'] == 1,
+                "is_ticket_order": row['is_ticket_order'] == 1,
                 "price": row['price'],
                 "created_at": row['created_at'].strftime("%Y-%m-%d %H:%M:%S")
             }
