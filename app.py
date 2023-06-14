@@ -774,8 +774,10 @@ def get_itinerary(city_id):
         guides_recommendations_raw = guides_recommendation(city_name).to_dict('records')
         guides_recommendations = []
         for guide in guides_recommendations_raw:
+            # Strip PMD prefix from guide_id
+            guide_id = guide['Pemandu_ID'][3:]
             guides_recommendations.append({
-                "id": guide['Pemandu_ID'],
+                "id": guide_id,
                 "name": guide['Nama_Pemandu'],
                 "price": guide['Price_per_hour'],
                 "image": guide['Avatars'],
