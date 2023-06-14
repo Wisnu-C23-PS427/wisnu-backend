@@ -1190,7 +1190,7 @@ def list_tickets():
 
             ticket = {
                 "id": row['id'],
-                "is_active": row['is_active'],
+                "is_active": row['is_active'] == 1,
                 "poi": {
                     "id": poi_row['id'],
                     "name": poi_row['name'],
