@@ -775,14 +775,42 @@ def get_itinerary(city_id):
 
         guides_recommendations_raw = guides_recommendation(city_name).to_dict('records')
         guides_recommendations = []
+
+        # Apparently, the mobile app can't handle generated images, 
+        # so we'll use a list of images instead
+        guides_image_male = [
+            "https://xsgames.co/randomusers/assets/avatars/male/43.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/37.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/24.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/38.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/70.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/35.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/69.jpg"
+        ]
+        guides_image_female = [
+            "https://xsgames.co/randomusers/assets/avatars/female/52.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/27.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/71.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/8.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/10.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/67.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/77.jpg"
+        ]
         for guide in guides_recommendations_raw:
             # Strip PMD prefix from guide_id
             guide_id = guide['Pemandu_ID'][3:]
+
+            # Determine the image list based on the gender
+            image_list = guides_image_female if "female" in guide['Avatars'] else guides_image_male
+
+            # Get a random image from the list
+            random_image = random.choice(image_list)
+
             guides_recommendations.append({
                 "id": guide_id,
                 "name": guide['Nama_Pemandu'],
                 "price": guide['Price_per_hour'],
-                "image": guide['Avatars'],
+                "image": random_image,
                 "time_duration_in_min": guide['Time_duration_in_min']
             })
 
@@ -792,7 +820,7 @@ def get_itinerary(city_id):
             poi_per_day = []
             for poi in itinerary_data:
                 if poi['hari'] == day:
-                    if poi['img'] == "None":
+                    if type(poi['img']) == float:
                         poi['img'] = 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/81/38/b5/saloka-memiliki-25-wahana.jpg?w=500&h=-1&s=1,110.458481,-7.2803431'
                     poi_data = {
                         "id": poi['attraction_id'],
@@ -907,6 +935,33 @@ def guide_detail(guide_id):
         db_cursor.execute("SELECT * FROM reviews WHERE Pemandu_ID = %s", (guide_id,))
         reviews = db_cursor.fetchall()
 
+        # Apparently, the mobile app can't handle generated images, 
+        # so we'll use a list of images instead
+        guides_image_male = [
+            "https://xsgames.co/randomusers/assets/avatars/male/43.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/37.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/24.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/38.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/70.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/35.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/male/69.jpg"
+        ]
+        guides_image_female = [
+            "https://xsgames.co/randomusers/assets/avatars/female/52.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/27.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/71.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/8.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/10.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/67.jpg",
+            "https://xsgames.co/randomusers/assets/avatars/female/77.jpg"
+        ]
+
+        # Determine the image list based on the gender
+        image_list = guides_image_female if "female" in guide['Avatars'] else guides_image_male
+
+        # Get a random image from the list
+        random_image = random.choice(image_list)
+
         # Create the response data
         response_data = {
             "status": 200,
@@ -915,7 +970,7 @@ def guide_detail(guide_id):
                 "id": guide['Pemandu_ID'],
                 "name": guide['Nama_Pemandu'],
                 "price": guide['Price_per_hour'],
-                "image": guide['Avatars'],
+                "image": random_image,
                 "time_duration_in_min": guide['Time_duration_in_min'],
                 "avg_star": guide['Rating'],
                 "reviews": []
@@ -957,7 +1012,6 @@ def guide_detail(guide_id):
 
 
 @app.route('/transaction/new', methods=['POST'])
-@jwt_required
 @jwt_required
 def create_order():
     try:
