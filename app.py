@@ -626,7 +626,7 @@ def get_poi():
         }
         return jsonify(response_data), 500
 
-@app.route('/pois/<int:id>', methods=['GET'])
+@app.route('/poi/<int:id>', methods=['GET'])
 @jwt_required
 def get_poi_data(id):
     try:
