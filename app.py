@@ -636,6 +636,8 @@ def get_poi_data(id):
         poi = db_cursor.fetchone()
 
         if poi:
+            if poi['image'] == "None":
+                poi['image'] = 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/81/38/b5/saloka-memiliki-25-wahana.jpg?w=500&h=-1&s=1,110.458481,-7.2803431'
             # Format the response data
             response_data = {
                 "status": 200,
@@ -790,6 +792,8 @@ def get_itinerary(city_id):
             poi_per_day = []
             for poi in itinerary_data:
                 if poi['hari'] == day:
+                    if poi['img'] == "None":
+                        poi['img'] = 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/81/38/b5/saloka-memiliki-25-wahana.jpg?w=500&h=-1&s=1,110.458481,-7.2803431'
                     poi_data = {
                         "id": poi['attraction_id'],
                         "name": poi['nama'],
