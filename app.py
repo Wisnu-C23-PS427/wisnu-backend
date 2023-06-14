@@ -1250,7 +1250,8 @@ def get_ticket(ticket_id):
                     "name": poi_row['name'],
                     "location": poi_row["location"]
                 },
-                "valid_date": ticket['valid_date'].strftime("%Y-%m-%d"),
+                "valid_date": (datetime.datetime.now() + datetime.timedelta(days=30)).strftime("%Y-%m-%d"), 
+                # ticket['valid_date'].strftime("%Y-%m-%d"),
                 "adult": [
                     {
                         "name": "Ticket Buyer 1",
