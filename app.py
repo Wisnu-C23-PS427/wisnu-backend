@@ -617,6 +617,49 @@ def get_poi():
         }
         return jsonify(response_data), 500
 
+@app.route('/pois/<int:id>', methods=['GET'])
+def get_poi_data(id):
+    try:
+        # Query the database to get the POI detail based on the provided ID
+        query = "SELECT attraction_id, nama AS name, kota AS location, img AS image FROM pois WHERE attraction_id = %s"
+        db_cursor.execute(query, (id,))
+        poi = db_cursor.fetchone()
+
+        if poi:
+            # Format the response data
+            response_data = {
+                "status": 200,
+                "message": "OK",
+                "data": {
+                    "id": poi['attraction_id'],
+                    "name": poi['name'],
+                    "location": poi['location'],
+                    "image": poi['image'],
+                    # "long": poi['long'],
+                    # "lat": poi['lat'],
+                    
+                    
+                }
+            }
+            return jsonify(response_data), 200
+        else:
+            # POI not found
+            response_data = {
+                "status": 404,
+                "message": "POI not found",
+                "data": None
+            }
+            return jsonify(response_data), 404
+    except Exception as e:
+        # Error occurred
+        response_data = {
+            "status": 500,
+            "message": str(e),
+            "data": None
+        }
+        return jsonify(response_data), 500
+
+
 @app.route('/cities', methods=['GET'])
 def get_cities():
     try:
