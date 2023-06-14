@@ -181,6 +181,7 @@ def login():
         return jsonify(response_data), 500
 
 @app.route('/auth/logout', methods=['POST'])
+@jwt_required
 def logout():
     try:
         # Get the request data
@@ -261,6 +262,7 @@ def account():
         return jsonify(response_data), 500
 
 @app.route('/pois/categories', methods=['GET'])
+@jwt_required
 def get_categories():
     try:
         # Query the database to get the categories
@@ -287,6 +289,7 @@ def get_categories():
         return jsonify(response_data), 500
 
 @app.route('/pois', methods=['GET'])
+@jwt_required
 def get_pois():
     try:
         # Get the preview flag, size, and page from the query parameters
@@ -358,6 +361,7 @@ def get_pois():
         return jsonify(response_data), 500
 
 @app.route('/events/<int:id>', methods=['GET'])
+@jwt_required
 def get_event_detail(id):
     try:
         # Retrieve event detail from the database based on the provided ID
@@ -398,6 +402,7 @@ def get_event_detail(id):
         return jsonify(response_data), 500
 
 @app.route('/events', methods=['GET'])
+@jwt_required
 def get_events():
     try:
         # Get the preview flag, size, and page from the query parameters
@@ -469,6 +474,7 @@ def get_events():
         return jsonify(response_data), 500
 
 @app.route('/search', methods=['POST'])
+@jwt_required
 def search():
     try:
         # Get the keyword and filter from the request form data
@@ -542,6 +548,7 @@ def search():
         return jsonify(response_data), 500
 
 @app.route('/discover', methods=['GET'])
+@jwt_required
 def discover():
     try:
         # Query the database to get the top-rated cities and POIs
@@ -588,6 +595,7 @@ def discover():
         return jsonify(response_data), 500
 
 @app.route('/poi', methods=['GET'])
+@jwt_required
 def get_poi():
     try:
         # Get the category from the query parameters
@@ -619,6 +627,7 @@ def get_poi():
         return jsonify(response_data), 500
 
 @app.route('/pois/<int:id>', methods=['GET'])
+@jwt_required
 def get_poi_data(id):
     try:
         # Query the database to get the POI detail based on the provided ID
@@ -662,6 +671,7 @@ def get_poi_data(id):
 
 
 @app.route('/cities', methods=['GET'])
+@jwt_required
 def get_cities():
     try:
         # Get the preview flag, size, and page from the query parameters
@@ -736,6 +746,7 @@ def get_cities():
         return jsonify(response_data), 500
 
 @app.route('/city/<int:city_id>/itinerary', methods=['GET'])
+@jwt_required
 def get_itinerary(city_id):
     try:
         # Query the database to get the city name based on the city_id
@@ -815,6 +826,7 @@ def get_itinerary(city_id):
         return jsonify(response_data), 500
 
 @app.route('/city/<int:city_id>', methods=['GET'])
+@jwt_required
 def get_city(city_id):
     try:
         # Build the SQL query to fetch the city details
@@ -867,6 +879,7 @@ def get_city(city_id):
         return jsonify(response_data), 500
 
 @app.route('/guide/<int:guide_id>', methods=['GET'])
+@jwt_required
 def guide_detail(guide_id):
     try:
         if guide_id < 1000:
@@ -940,6 +953,7 @@ def guide_detail(guide_id):
 
 
 @app.route('/transaction/new', methods=['POST'])
+@jwt_required
 @jwt_required
 def create_order():
     try:
@@ -1067,6 +1081,7 @@ def create_order():
         return jsonify(response_data), 500
     
 @app.route('/transactions', methods=['GET'])
+@jwt_required
 def list_transactions():
     try:
         filter_type = request.args.get('filter', 'all')  # Get the filter parameter, default to 'all' if not provided
@@ -1123,6 +1138,7 @@ def list_transactions():
         return jsonify(response_data), 500    
 
 @app.route('/tickets', methods=['GET'])
+@jwt_required
 def list_tickets():
     try:
         filter_type = request.args.get('filter', 'active')  # Get the filter parameter, default to 'active' if not provided
@@ -1202,6 +1218,7 @@ def list_tickets():
         return jsonify(response_data), 500
 
 @app.route('/ticket/<string:ticket_id>', methods=['GET'])
+@jwt_required
 def get_ticket(ticket_id):
     try:
         # Construct the SQL query to retrieve ticket details based on ticket_id
