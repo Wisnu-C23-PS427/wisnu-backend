@@ -263,7 +263,6 @@ def account():
         return jsonify(response_data), 500
 
 @app.route('/pois/categories', methods=['GET'])
-@jwt_required
 def get_categories():
     try:
         # Query the database to get the categories
