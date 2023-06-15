@@ -1360,6 +1360,123 @@ def get_ticket(ticket_id):
             "data": None
         }
         return jsonify(response_data), 500
+    
+        
+@app.route('/transaction/<int:trx_id>', methods=['GET'])
+@jwt_required
+def get_transaction(trx_id):
+    try:
+        # Retrieve transaction data from the database based on trx_id
+        transaction_query = """
+            SELECT * FROM transactions WHERE id = %s
+        """
+        transaction_params = (trx_id,)
+        db_cursor.execute(transaction_query, transaction_params)
+        transaction_row = db_cursor.fetchone()
+
+        if transaction_row is None:
+            # Transaction not found
+            response_data = {
+                "status": 404,
+                "message": "Transaction not found",
+                "data": None
+            }
+            return jsonify(response_data), 404
+        is_guide_order = transaction_row['is_guide_order']
+        is_ticket_order = transaction_row['is_ticket_order']
+        price = transaction_row['price']
+        created_at = transaction_row['created_at']
+        
+        guide = None
+        pois = []
+        
+
+        if is_guide_order:
+
+            if trx_id < 1000:
+                guide_id = "PMD" + str(trx_id).zfill(3)
+            
+            else:
+                guide_id = "PMD" + str(trx_id)
+
+            
+            # Retrieve guide data from the database based on trx_id
+            guide_query = """
+                SELECT Pemandu_ID as id, Nama_Pemandu as name, Avatars as image, Nomor_Telepon as phone_number FROM guides WHERE Pemandu_ID = %s
+            """
+            transaction_params = (guide_id,)
+            db_cursor.execute(guide_query, transaction_params)
+            guide_row = db_cursor.fetchone()
+            end_date = datetime.datetime.now() + datetime.timedelta(days=7)
+            print("nilai guiderow:",guide_row)
+            if guide_row is not None:
+                print("nilai guiderow dalam if:",guide_row)
+                # Create guide object
+                guide = {
+                    "id": guide_row['id'],
+                    "name": guide_row['name'],
+                    "image": guide_row['image'],
+                    "phone_number": guide_row['phone_number'],
+                     "start_date": datetime.datetime.now(),  # Tanggal pembuatan transaksi
+                    "end_date": end_date.strftime("%Y-%m-%d")
+                }
+            else:
+                # Guide data not found
+                 guide = {
+                    "id": None,
+                    "name": None,
+                    "image": None,
+                    "phone_number": None,
+                    "start_date": datetime.datetime.now().strftime("%Y-%m-%d"),
+                    "end_date": end_date.strftime("%Y-%m-%d")
+                }
+            print("nilai guide", guide)
+        if is_ticket_order:
+        # Retrieve ticket data from the database based on trx_id
+            ticket_query = """
+                SELECT pois.id, pois.name, pois.location FROM tickets
+                INNER JOIN pois ON tickets.poi_id = pois.id
+                WHERE tickets.id = %s
+            """
+            ticket_params = (trx_id,)
+            db_cursor.execute(ticket_query, ticket_params)
+            ticket_rows = db_cursor.fetchall()
+        
+            for ticket_row in ticket_rows:
+                poi = {
+                    "id": ticket_row['id'],
+                    "name": ticket_row['name'],
+                    "location": ticket_row['location']
+                }
+                pois.append(poi)
+        
+        # Generate response data
+        response_data = {
+            "status": 200,
+            "message": "OK",
+            "data": {
+                "id": trx_id,
+                "is_guide_order": is_guide_order,
+                "is_ticket_order": is_ticket_order,
+                "price": price,
+                "created_at": created_at,
+                "guide": guide,
+                "pois": pois
+            }
+        }
+        
+        # Return the response as JSON
+        return jsonify(response_data), response_data['status']
+    except Exception as e:
+        # Server error
+        response_data = {
+            "status": 500,
+            "message": f"Reason: {str(e)}",
+            "data": None
+        }
+        return jsonify(response_data), 500
+
+
 
 @app.errorhandler(400)
 def handle_client_error(e):
