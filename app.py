@@ -436,7 +436,7 @@ def get_events():
         sql_query = "SELECT attraction_id AS id, nama AS name, kota AS location, img AS image FROM events"
 
         # Add ORDER BY clause to sort by date in ascending order
-        sql_query += " ORDER BY date ASC"
+        sql_query += " ORDER BY attraction_id ASC"
 
         query_params = ()
         if limit is not None:
