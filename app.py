@@ -1111,10 +1111,42 @@ def create_order():
 
         # Process guide data
         guide = None
+        
         if guide_data:
             poi_id = guide_data['poi_id']
-            guide_id = guide_data['guide_id']
             min_multiplier = guide_data['min_multiplier']
+            guide_id= guide_data['guide_id']
+
+            if guide_id < 1000:
+                guide_id = "PMD" + str(guide_id).zfill(3)
+            else:
+                guide_id = "PMD" + str(guide_id)
+            #Retrieve guide information from the database based on guide_id
+            
+            guide_params = (guide_id,)
+            db_cursor.execute("SELECT * FROM guides WHERE Pemandu_ID = %s", guide_params)
+            guide_row = db_cursor.fetchone()
+            
+            end_date = datetime.datetime.now() + datetime.timedelta(days=7)
+
+            if guide_row is not None:
+                # # Create guide object
+                guide = {
+                    "id": guide_row['Pemandu_ID'],
+                    "name": guide_row['Nama_Pemandu'],
+                    "image": guide_row['Avatars'],
+                    "start_date": datetime.datetime.now(),  # Tanggal pembuatan transaksi
+                    "end_date": end_date.strftime("%Y-%m-%d")  # Tanggal pembuatan transaksi + 7 hari
+                }
+            else:
+                # Guide data not found
+                guide = {
+                    "id": None,
+                    "name": None,
+                    "image": None,
+                    "start_date": datetime.datetime.now().strftime("%Y-%m-%d"),
+                    "end_date": (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+                }
             
         # Generate response data
         response_data = {
@@ -1123,7 +1155,7 @@ def create_order():
             "data": {
                 "id": order_id,  # Replace with the actual order ID
                 "ticket": tickets,  # Replace with the actual ticket data
-                "guide": None,  # Replace with the actual guide data
+                "guide": guide,  # Replace with the actual guide data
                 "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") # Replace with the actual creation timestamp
             }
         }
