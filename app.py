@@ -921,6 +921,7 @@ def guide_detail(guide_id):
         # Query the database to get the guide information based on the guide_id
         db_cursor.execute("SELECT * FROM guides WHERE Pemandu_ID = %s", (guide_id,))
         guide = db_cursor.fetchone()
+        db_cursor.fetchall()
 
         if not guide:
             # Guide not found
