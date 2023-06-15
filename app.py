@@ -483,7 +483,7 @@ def search():
 
         # Query the database to search for cities and POIs based on the keyword and category filter
         city_query = """
-            SELECT DISTINCT attraction_id AS id, kota AS name, provinsi AS location, img AS image
+            SELECT DISTINCT id_kota AS id, kota AS name, provinsi AS location, img AS image
             FROM pois
             WHERE (kota LIKE %s OR provinsi LIKE %s)
         """
