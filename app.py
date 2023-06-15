@@ -184,11 +184,8 @@ def login():
 @app.route('/auth/logout', methods=['POST'])
 def logout():
     try:
-        # Get the request data
-        data = request.json
-
-        # Extract the token from the request
-        token = data.get('token')
+        # Extract the token from the request header
+        token = request.headers.get('Authorization').split()[1]
 
         # Remove the token from the active_tokens set
         active_tokens.remove(token)
@@ -204,8 +201,8 @@ def logout():
         # Return the response as JSON
         return jsonify(response_data), 200
 
-    except KeyError:
-        # Token not found in the active_tokens set
+    except (KeyError, IndexError):
+        # Token not found in the request header or invalid format
         response_data = {
             "status": 401,
             "message": "Invalid token",
