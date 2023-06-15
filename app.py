@@ -866,6 +866,7 @@ def get_city(city_id):
         # Execute the SQL query to fetch the city details
         db_cursor.execute(city_query, (city_id,))
         city = db_cursor.fetchone()
+        db_cursor.fetchall()
 
         if city is None:
             # City not found
