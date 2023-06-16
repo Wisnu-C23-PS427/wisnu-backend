@@ -861,7 +861,8 @@ def get_itinerary(city_id):
                 "name": guide['Nama_Pemandu'],
                 "price": guide['Price_per_hour'],
                 "image": random_image,
-                "time_duration_in_min": guide['Time_duration_in_min']
+                "time_duration_in_min": guide['Time_duration_in_min'],
+                "avg_star": guide['Rating']
             })
 
         # Divide the itinerary data into an array of days
