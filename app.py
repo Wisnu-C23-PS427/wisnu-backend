@@ -1091,7 +1091,26 @@ def create_order():
             is_ticket_order = True
         else:
             is_ticket_order = False
-        price = request_data.get('transactions')  # Ubah nilai sesuai logika bisnis
+        price = 0
+        for ticket in ticket_data:
+            poi_id = ticket['poi_id']
+            num_adult = ticket['num_adult']
+            num_child = ticket['num_child']
+            
+            # Retrieve POI information from the database based on poi_id
+            poi_query = """
+                SELECT attraction_id as id, nama as name, kota as location, adult_price, child_price FROM pois WHERE attraction_id = %s
+            """
+            
+            poi_params = (poi_id,)
+            db_cursor.execute(poi_query, poi_params)
+            poi_row = db_cursor.fetchone()
+            db_cursor.fetchall()
+
+            # Calculate the price for the ticket
+            adult_price = poi_row['adult_price']
+            child_price = poi_row['child_price']
+            price += (adult_price * num_adult) + (child_price * num_child)
         created_at = datetime.datetime.now()
         
         # Perform order creation logic here
