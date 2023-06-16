@@ -635,15 +635,11 @@ def get_poi_data(poi_id):
         db_cursor.execute(query, poi_params)
         poi = db_cursor.fetchone()
         
-        
-        
         if poi:
             if poi['image'] == "None":
                 poi['image'] = 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/81/38/b5/saloka-memiliki-25-wahana.jpg?w=500&h=-1&s=1,110.458481,-7.2803431'
             
         if poi is not None:
-                # print("nilai guiderow dalam if:",guides)
-                # Create guide object
                 poi_data = {
                     "id": poi['id'],
                     "name": poi['name'],
@@ -686,11 +682,9 @@ def get_poi_data(poi_id):
                     "price": guide['price'],
                     "image": guide['image'],
                     "price": guide['price'],
-                    "Time_duration_in_min": guide['Time_duration_in_min']
+                    "time_duration_in_min": guide['Time_duration_in_min']
                 }
                 guide_data_list.append(guide_data)
-            else:
-                guide_data_list= []
 
             response_data = {
                 "status": 200,
@@ -703,14 +697,23 @@ def get_poi_data(poi_id):
                         "is_ticketing_enabled": False,
                         "adult_price": poi['adult_price'],
                         "child_price": poi['child_price']
-                    }
+                    },
+                    "galleries": [
+                        {
+                            "id": 1,
+                            "name": poi['name'] + " image",
+                            "is_from_wisnu_team": True,
+                            "is_vr_capable": False,
+                            "image": poi['image'],
+                            "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        },
+                    ]
                 }
             }
                     
             return jsonify(response_data), 200
         
     except Exception as e:
-        # Error occurred
         response_data = {
             "status": 500,
             "message": str(e),
