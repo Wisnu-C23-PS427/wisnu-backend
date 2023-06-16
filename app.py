@@ -1082,8 +1082,15 @@ def create_order():
         # Extract ticket and guide data from the request
         ticket_data = request_data.get('ticket', [])
         guide_data = request_data.get('guide')
-        is_guide_order = True  # Ubah nilai sesuai logika bisnis
-        is_ticket_order = False  # Ubah nilai sesuai logika bisnis
+        # is_guide_order = # Ubah nilai sesuai logika bisnis
+        if guide_data:
+            is_guide_order = True
+        else:
+            is_guide_order = False
+        if ticket_data:
+            is_ticket_order = True
+        else:
+            is_ticket_order = False
         price = request_data.get('transactions')  # Ubah nilai sesuai logika bisnis
         created_at = datetime.datetime.now()
         
@@ -1104,7 +1111,6 @@ def create_order():
             poi_id = ticket['poi_id']
             num_adult = ticket['num_adult']
             num_child = ticket['num_child']
-
             
             # Retrieve POI information from the database based on poi_id
             poi_query = """
@@ -1151,22 +1157,60 @@ def create_order():
             # Add ticket details to the tickets list
             tickets.append(ticket_details)
 
-                        # Insert ticket data into the 'tickets' table
+            # Insert ticket data into the 'tickets' table
             ticket_query = """
                 INSERT INTO tickets (id, is_active, poi_id, created_at)
                 VALUES (%s, %s, %s, %s)
             """
 
-            ticket_params = (ticket_details['id'], 1, poi_id, created_at)
+            ticket_params = (order_id, 1, poi_id, created_at)
             db_cursor.execute(ticket_query, ticket_params)
             db_connection.commit()
 
         # Process guide data
         guide = None
         if guide_data:
-            poi_id = guide_data['poi_id']
             guide_id = guide_data['guide_id']
-            min_multiplier = guide_data['min_multiplier']
+            if guide_id < 1000:
+                guide_id = "PMD" + str(guide_id).zfill(3)
+            else:
+                guide_id = "PMD" + str(guide_id)
+            db_cursor.execute("SELECT * FROM guides WHERE Pemandu_ID = %s", (guide_id,))
+            guide = db_cursor.fetchone()
+            db_cursor.fetchall()
+            # Apparently, the mobile app can't handle generated images, 
+            # so we'll use a list of images instead
+            guides_image_male = [
+                "https://xsgames.co/randomusers/assets/avatars/male/43.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/male/37.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/male/24.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/male/38.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/male/70.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/male/35.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/male/69.jpg"
+            ]
+            guides_image_female = [
+                "https://xsgames.co/randomusers/assets/avatars/female/52.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/female/27.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/female/71.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/female/8.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/female/10.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/female/67.jpg",
+                "https://xsgames.co/randomusers/assets/avatars/female/77.jpg"
+            ]
+
+            # Determine the image list based on the gender
+            image_list = guides_image_female if "female" in guide['Avatars'] else guides_image_male
+
+            # Get a random image from the list
+            random_image = random.choice(image_list)
+            guide = {
+                "id": guide_data['guide_id'],
+                "name": guide["Pemandu_ID"],
+                "image": random_image,
+                "start_date": datetime.datetime.now().strftime("%Y-%m-%d"),
+                "end_date": (datetime.datetime.now() + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+            }
             
         # Generate response data
         response_data = {
@@ -1175,7 +1219,7 @@ def create_order():
             "data": {
                 "id": order_id,  # Replace with the actual order ID
                 "ticket": tickets,  # Replace with the actual ticket data
-                "guide": None,  # Replace with the actual guide data
+                "guide": guide,  # Replace with the actual guide data
                 "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") # Replace with the actual creation timestamp
             }
         }
@@ -1412,7 +1456,6 @@ def get_ticket(ticket_id):
         }
         return jsonify(response_data), 500
     
-        
 @app.route('/transaction/<int:trx_id>', methods=['GET'])
 @jwt_required
 def get_transaction(trx_id):
@@ -1526,8 +1569,6 @@ def get_transaction(trx_id):
             "data": None
         }
         return jsonify(response_data), 500
-
-
 
 @app.errorhandler(400)
 def handle_client_error(e):
