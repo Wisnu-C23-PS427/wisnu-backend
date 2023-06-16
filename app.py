@@ -184,8 +184,11 @@ def login():
 @app.route('/auth/logout', methods=['POST'])
 def logout():
     try:
-        # Extract the token from the request header
-        token = request.headers.get('Authorization').split()[1]
+        # Get the request data
+        data = request.json
+
+        # Extract the token from the request
+        token = data.get('token')
 
         # Remove the token from the active_tokens set
         active_tokens.remove(token)
@@ -201,8 +204,8 @@ def logout():
         # Return the response as JSON
         return jsonify(response_data), 200
 
-    except (KeyError, IndexError):
-        # Token not found in the request header or invalid format
+    except KeyError:
+        # Token not found in the active_tokens set
         response_data = {
             "status": 401,
             "message": "Invalid token",
@@ -433,7 +436,7 @@ def get_events():
         sql_query = "SELECT attraction_id AS id, nama AS name, kota AS location, img AS image FROM events"
 
         # Add ORDER BY clause to sort by date in ascending order
-        sql_query += " ORDER BY attraction_id ASC"
+        sql_query += " ORDER BY date ASC"
 
         query_params = ()
         if limit is not None:
@@ -483,7 +486,7 @@ def search():
 
         # Query the database to search for cities and POIs based on the keyword and category filter
         city_query = """
-            SELECT DISTINCT id_kota AS id, kota AS name, provinsi AS location, img AS image
+            SELECT DISTINCT attraction_id AS id, kota AS name, provinsi AS location
             FROM pois
             WHERE (kota LIKE %s OR provinsi LIKE %s)
         """
@@ -622,42 +625,90 @@ def get_poi():
         }
         return jsonify(response_data), 500
 
-@app.route('/poi/<int:id>', methods=['GET'])
+@app.route('/poi/<int:poi_id>', methods=['GET'])
 @jwt_required
-def get_poi_data(id):
+def get_poi_data(poi_id):
     try:
         # Query the database to get the POI detail based on the provided ID
-        query = "SELECT attraction_id, nama AS name, kota AS location, img AS image FROM pois WHERE attraction_id = %s"
-        db_cursor.execute(query, (id,))
+        query = "SELECT attraction_id as id, nama AS name, kota AS location, img AS image, adult_price, child_price, CONCAT('The ', nama, ' is located at ', kota, '. This place has a unique story behind it. Lets check it out! #WisataNusantara') as background_story, longitude, latitude FROM pois WHERE attraction_id = %s"
+        poi_params = (poi_id,)
+        db_cursor.execute(query, poi_params)
         poi = db_cursor.fetchone()
-
+        
+        
+        
         if poi:
             if poi['image'] == "None":
                 poi['image'] = 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/81/38/b5/saloka-memiliki-25-wahana.jpg?w=500&h=-1&s=1,110.458481,-7.2803431'
-            # Format the response data
-            response_data = {
-                "status": 200,
-                "message": "OK",
-                "data": {
-                    "id": poi['attraction_id'],
+            
+        if poi is not None:
+                # print("nilai guiderow dalam if:",guides)
+                # Create guide object
+                poi_data = {
+                    "id": poi['id'],
                     "name": poi['name'],
                     "location": poi['location'],
                     "image": poi['image'],
-                    # "long": poi['long'],
-                    # "lat": poi['lat'],
-                    
-                    
+                    "background_story": poi['background_story'],
+                    "position":{
+                            "longitude": float(poi['longitude']),
+                            "latitude": float(poi['latitude'])
                 }
             }
-            return jsonify(response_data), 200
         else:
-            # POI not found
+            # Handle the case when poi is None
             response_data = {
                 "status": 404,
                 "message": "POI not found",
                 "data": None
             }
             return jsonify(response_data), 404
+        if poi_id < 1000:
+            poi_id_str = "PMD" + str(poi_id).zfill(3)
+        else:
+            poi_id_str = "PMD" + str(poi_id)
+            
+        
+        guide_query = """
+        SELECT Pemandu_ID as id, Nama_Pemandu as name, Price_per_hour as price, Avatars as image, Time_duration_in_min as Time_duration_in_min FROM guides WHERE Pemandu_ID = %s
+        """
+        db_cursor.execute(guide_query, (poi_id_str,))
+        guides = db_cursor.fetchall()
+        
+
+        guide_data_list = []
+        if guides is not None:
+            for guide in guides:
+                # Create guide object
+                guide_data = {
+                    "id": guide['id'],
+                    "name": guide['name'],
+                    "price": guide['price'],
+                    "image": guide['image'],
+                    "price": guide['price'],
+                    "Time_duration_in_min": guide['Time_duration_in_min']
+                }
+                guide_data_list.append(guide_data)
+            else:
+                guide_data_list= []
+
+            response_data = {
+                "status": 200,
+                "message": "OK",
+                "data": {
+                    "id": poi_id,
+                    "poi": poi_data,
+                    "guide": guide_data_list,
+                    "tickets": {
+                        "is_ticketing_enabled": False,
+                        "adult_price": poi['adult_price'],
+                        "child_price": poi['child_price']
+                    }
+                }
+            }
+                    
+            return jsonify(response_data), 200
+        
     except Exception as e:
         # Error occurred
         response_data = {
